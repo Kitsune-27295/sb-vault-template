@@ -1,0 +1,65 @@
+name: validate
+
+# This repository's own checks. Only runs here: a vault created from this template carries the file
+# but the guard below turns it off.
+#
+# What it proves after every publish: the published wheel installs, this vault passes its own
+# lint, the installer script works, a vault made from this template has nothing to upgrade, and
+# the reusable update workflow runs end to end (in dry-run, so it opens nothing).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    if: ${{ github.repository == 'Kitsune-27295/sb-vault-template' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      SB_HOME: ${{ runner.temp }}/sb
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install the published sb
+        run: python setup-sb.py --tool-only
+      - name: The installer reports what is installed
+        run: python setup-sb.py --check
+      - name: The vault passes its own lint
+        run: |
+          git init -q
+          "$SB_HOME/venv/bin/sb" lint
+      - name: A vault made from this template has nothing to upgrade
+        run: |
+          "$SB_HOME/venv/bin/sb" upgrade --dry-run --json > plan.json
+          python - <<'PY'
+          import json
+          plan = json.load(open("plan.json", encoding="utf-8"))
+          todo = [c for c in plan if c["action"] != "current"]
+          assert not todo, f"template and wheel disagree: {todo}"
+          print(f"{len(plan)} files, all current")
+          PY
+
+  update-flow:
+    if: ${{ github.repository == 'Kitsune-27295/sb-vault-template' }}
+    needs: validate
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: ./.github/workflows/update-vault.yml
+    with:
+      template-ref: ${{ github.sha }}
+      dry-run: true

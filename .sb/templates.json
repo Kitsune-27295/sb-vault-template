@@ -7,8 +7,10 @@
     ".claude/skills/query/SKILL.md": "cdf442ee3f98ea4531cef5fed7d720cce0521070dbd92b981bc4be43a4d5ea31",
     ".claude/skills/wrapup/SKILL.md": "514db57f65913e203b399ca619bceee68ac07effffff16572224ec796b38533a",
     ".gitattributes": "979b5eedadf206129aaf1c6596061ab0d2e795b250e93b5df1153b8d133bc229",
+    ".github/workflows/sb-update.yml": "bda62f743bbcb08a4775fc0c0214e6ebcbc53f690b329a779a284d1a7e8c525a",
     "AGENTS.md": "cbf63a6e23c7f7d1498accfcd5a1d6838e3517a5ad218b6d919623dcc5eff5fc",
-    "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+    "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
+    "setup-sb.py": "f3864711afa8f06e0095c090f3e49ea72d36047806080b8765af9e7c7b9b3f33"
   },
-  "sb": "0.1.0"
+  "sb": "0.2.0"
 }

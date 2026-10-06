@@ -1,0 +1,109 @@
+name: update-vault
+
+# Reusable workflow. A vault's own `sb-update.yml` calls it every week:
+#
+#   uses: Kitsune-27295/sb-vault-template/.github/workflows/update-vault.yml@stable
+#
+# It installs the newest published `sb`, runs `sb upgrade` on the caller's vault, and opens (or
+# refreshes) ONE pull request on the branch `sb/framework-update` with the framework files that
+# changed. `sb upgrade` never touches notes, sources, memory or the log, and a file the curator
+# edited is kept, so merging that pull request cannot lose data. Nothing changes until it is merged.
+#
+# The logic lives here, not in the vault, so improving the update flow reaches every vault with
+# no action from anyone (the caller points at the moving tag `stable`).
+
+on:
+  workflow_call:
+    inputs:
+      template-ref:
+        description: "Ref of the template repository that supplies setup-sb.py"
+        type: string
+        default: stable
+      dry-run:
+        description: "Print the plan and open nothing (this repository's own validation)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    name: Update the vault
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      SB_HOME: ${{ runner.temp }}/sb
+      BRANCH: sb/framework-update
+    steps:
+      - name: Check out the vault
+        uses: actions/checkout@v7
+
+      - name: Check out the installer
+        uses: actions/checkout@v7
+        with:
+          repository: Kitsune-27295/sb-vault-template
+          ref: ${{ inputs.template-ref }}
+          path: .sb-template
+          persist-credentials: false
+
+      # The installer checkout sits inside the vault's working tree; keep it out of the commit.
+      - name: Keep the installer out of the commit
+        run: echo ".sb-template/" >> .git/info/exclude
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install the newest sb (sha256-checked)
+        run: python .sb-template/setup-sb.py --tool-only
+
+      - name: Upgrade the vault
+        run: |
+          sb="$SB_HOME/venv/bin/sb"
+          "$sb" upgrade --json > "$RUNNER_TEMP/plan.json"
+          jq -r '.[] | select(.action != "current") | "\(.action)\t\(.path)"' "$RUNNER_TEMP/plan.json"
+          "$SB_HOME/venv/bin/python" -c "import sb; print(sb.__version__)" > "$RUNNER_TEMP/version"
+
+      - name: Open or refresh the pull request
+        if: ${{ !inputs.dry-run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Already up to date; no pull request."
+            exit 0
+          fi
+          version="$(cat "$RUNNER_TEMP/version")"
+          {
+            echo "Framework files changed by \`sb upgrade\` ($version). Your notes, sources, memory and log are untouched."
+            echo
+            echo '| action | file |'
+            echo '|---|---|'
+            jq -r '.[] | select(.action != "current") | "| \(.action) | `\(.path)` |"' "$RUNNER_TEMP/plan.json"
+            echo
+            echo 'A row marked `kept` is a file you edited: it was left exactly as it is.'
+          } > "$RUNNER_TEMP/body.md"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git switch -C "$BRANCH"
+          git add -A
+          git commit -q -m "Update sb framework files to $version" \
+            -m "Automatic via update-vault (Kitsune-27295/sb-vault-template@${{ inputs.template-ref }})."
+          git push --force origin "$BRANCH"
+
+          base="$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)"
+          existing="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')"
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --title "Update sb to $version" --body-file "$RUNNER_TEMP/body.md"
+            echo "Refreshed pull request #$existing"
+          elif ! gh pr create --base "$base" --head "$BRANCH" --title "Update sb to $version" \
+                 --body-file "$RUNNER_TEMP/body.md"; then
+            echo "::error::The update is on branch $BRANCH but a pull request could not be opened."
+            echo "::error::Enable Settings > Actions > General > 'Allow GitHub Actions to create and approve pull requests', or open the pull request from that branch by hand."
+            exit 1
+          fi

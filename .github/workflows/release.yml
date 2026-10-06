@@ -1,0 +1,36 @@
+name: release
+
+# A tag `vX.Y.Z` on this repository (pushed by the framework's publish workflow when the version
+# changes) becomes a GitHub Release: the wheel plus the notes written in the framework's CHANGELOG.
+# Both come from the `dist` branch. Only runs here, never in a vault made from this template.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: ${{ github.repository == 'Kitsune-27295/sb-vault-template' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: dist
+      - name: Create the release (once)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; nothing to do."
+            exit 0
+          fi
+          gh release create "$GITHUB_REF_NAME" sb-*.whl \
+            --verify-tag --title "sb ${GITHUB_REF_NAME#v}" --notes-file RELEASE_NOTES.md
