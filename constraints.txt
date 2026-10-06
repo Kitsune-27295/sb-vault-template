@@ -2,6 +2,7 @@
 # CI installs with `pip install -c constraints.txt`; the weekly canary ignores this file.
 PyYAML==6.0.3
 Pygments==2.21.0
+actionlint_py==1.7.12.25
 annotated-doc==0.0.5
 ast_serialize==0.12.1
 babel==2.18.0
