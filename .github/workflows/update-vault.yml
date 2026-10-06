@@ -36,9 +36,12 @@ jobs:
       contents: write
       pull-requests: write
     env:
-      SB_HOME: ${{ runner.temp }}/sb
       BRANCH: sb/framework-update
     steps:
+      # `runner` is not available in a job-level `env`, so the tool's home is set from a step.
+      - name: Choose where sb is installed
+        run: echo "SB_HOME=$RUNNER_TEMP/sb" >> "$GITHUB_ENV"
+
       - name: Check out the vault
         uses: actions/checkout@v7
 

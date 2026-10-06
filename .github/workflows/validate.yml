@@ -25,12 +25,12 @@ jobs:
     if: ${{ github.repository == 'Kitsune-27295/sb-vault-template' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 360
-    env:
-      SB_HOME: ${{ runner.temp }}/sb
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Choose where sb is installed
+        run: echo "SB_HOME=$RUNNER_TEMP/sb" >> "$GITHUB_ENV"
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
