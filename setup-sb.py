@@ -39,6 +39,16 @@ def tool_home() -> Path:
     return Path.home() / ".local" / "share" / "sb"
 
 
+# The longest file a dependency unpacks (lxml's schematron skeleton) is about 115 characters below
+# the virtualenv folder; Windows stops at 259 unless long paths are enabled.
+LONGEST_BELOW_HOME = 130
+WINDOWS_MAX_PATH = 259
+
+
+def path_too_long(home: Path) -> bool:
+    return WINDOWS and len(str(home)) + LONGEST_BELOW_HOME > WINDOWS_MAX_PATH
+
+
 def venv_python(home: Path) -> Path:
     return (
         home / "venv" / ("Scripts" if WINDOWS else "bin") / ("python.exe" if WINDOWS else "python")
@@ -137,6 +147,11 @@ def main() -> int:
         print(f"sb needs Python 3.12 or newer; this is {sys.version.split()[0]}", file=sys.stderr)
         return 1
     home = tool_home()
+    if path_too_long(home):
+        print(f"{home} is too long for Windows ({len(str(home))} characters).", file=sys.stderr)
+        print("Pick a short folder, for example:  set SB_HOME=C:" + chr(92) + "sb", file=sys.stderr)
+        print("then run this script again. Nothing was changed.", file=sys.stderr)
+        return 1
     try:
         newest = latest()
     except (OSError, ValueError) as exc:  # URLError is an OSError
