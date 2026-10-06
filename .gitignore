@@ -1,0 +1,7 @@
+.sb/index.sqlite
+.obsidian/workspace*.json
+.env
+.env.*
+# Generated per machine by `sb hook install` (they hold this machine's interpreter path)
+.claude/settings.local.json
+.githooks/

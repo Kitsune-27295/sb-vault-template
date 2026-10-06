@@ -1,0 +1,6 @@
+# Installed by `sb init`: one line-ending convention for every tool that writes here.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary
+*.sqlite binary

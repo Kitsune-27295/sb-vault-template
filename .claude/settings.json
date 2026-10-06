@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sb:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Edit(./sources/*.md)",
+      "Edit(./sources/*.meta.json)",
+      "Edit(./sources/inbox/**)",
+      "Edit(./index.md)"
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+# Golden queries for `sb eval` (ADR-003): recall@5 below 0.8 means evaluate hybrid search.
+# Add real questions you ask, with the pages that should answer them, for example:
+#
+# - query: diferença entre RAG e LLM Wiki
+#   expect: [LLM Wiki, RAG]
+[]
