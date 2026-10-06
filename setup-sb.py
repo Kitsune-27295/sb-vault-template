@@ -19,6 +19,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.error
 import urllib.request
 import venv
@@ -63,8 +64,14 @@ def installed(home: Path) -> dict[str, str] | None:
     return data if isinstance(data, dict) and venv_python(home).exists() else None
 
 
+class ChecksumError(ValueError):
+    """A download does not match the sha256 that was published for it."""
+
+
 def fetch(name: str) -> bytes:
-    with urllib.request.urlopen(f"{SOURCE}/{name}", timeout=60) as response:
+    # raw.githubusercontent.com keeps copies for minutes; a unique query asks for a fresh one.
+    url = f"{SOURCE}/{name}?cb={time.time_ns()}"
+    with urllib.request.urlopen(url, timeout=60) as response:
         return bytes(response.read())
 
 
@@ -79,7 +86,7 @@ def latest() -> dict[str, str]:
 def download(name: str, expected: str, folder: Path) -> Path:
     blob = fetch(name)
     if hashlib.sha256(blob).hexdigest() != expected:
-        raise ValueError(f"{name} does not match its sha256; nothing was installed")
+        raise ChecksumError(f"{name} does not match its sha256; nothing was installed")
     path = folder / name
     path.write_bytes(blob)
     return path
@@ -109,6 +116,20 @@ def install(info: dict[str, str], home: Path) -> None:
             # Same version number, different build: pip would call it "already satisfied".
             run(python, "-m", "pip", "install", "--quiet", "--force-reinstall", "--no-deps", wheel)
     (home / "installed.json").write_text(json.dumps(info) + "\n", encoding="utf-8", newline="\n")
+
+
+def install_with_retries(info: dict[str, str], home: Path) -> None:
+    """Right after a publish the files can briefly disagree: wait, ask again, keep the check."""
+    for attempt in range(1, 4):
+        try:
+            install(info, home)
+            return
+        except ChecksumError:
+            if attempt == 3:
+                raise
+            print(f"checksum mismatch (attempt {attempt} of 3); asking again shortly", flush=True)
+            time.sleep(5 * attempt)
+            info = latest()
 
 
 def wire_vault(home: Path) -> None:
@@ -164,7 +185,7 @@ def main() -> int:
         return 0
     if have is None or have.get("sha256") != newest["sha256"]:
         try:
-            install(newest, home)
+            install_with_retries(newest, home)
         except (ValueError, subprocess.CalledProcessError, OSError) as exc:
             print(f"install failed: {exc}", file=sys.stderr)
             return 1
