@@ -2,16 +2,16 @@
   "files": {
     ".claude/settings.json": "3a06908cbad852c41a7d9936794e37761ce46f2cb33f662f8088ff61d593ae05",
     ".claude/skills/consolidate/SKILL.md": "8d03fc3da76dffaf95ef219147cf07efb10bdefc24c50d3bbe9d99cd7706d250",
-    ".claude/skills/ingest/SKILL.md": "42f15eb631c634d19567e9083239931f92a920c4ecff8e4b12a70ee17e0ec183",
+    ".claude/skills/ingest/SKILL.md": "15bfd8304827b364ce5ca525200eadd6bf0810d3c54d184ce466c4fcc547d363",
     ".claude/skills/onboarding/SKILL.md": "0d844c8416f754c5d0282d56b865292c7690b612fe8e5a70fa1d7a2bca885dd4",
-    ".claude/skills/query/SKILL.md": "77c74f3c7bbdedbbcaa4a60b0715687fb702ee060fae8080c3b0989295d5760d",
-    ".claude/skills/triage/SKILL.md": "74d14c0b7e4f6a93b7a3ad1f71dec422ba934f8a9344a9660bd279ea05f6a06e",
+    ".claude/skills/query/SKILL.md": "3fa1892b82eef8af5d49a34b1c5f893a4d7801972e7230b80551f6196583c7b3",
+    ".claude/skills/triage/SKILL.md": "b9a06f48d6288e9b533c86349cc5483249a8a9c78099ff5230d5be4228a0e45e",
     ".claude/skills/wrapup/SKILL.md": "514db57f65913e203b399ca619bceee68ac07effffff16572224ec796b38533a",
     ".gitattributes": "979b5eedadf206129aaf1c6596061ab0d2e795b250e93b5df1153b8d133bc229",
     ".github/workflows/sb-update.yml": "bda62f743bbcb08a4775fc0c0214e6ebcbc53f690b329a779a284d1a7e8c525a",
-    "AGENTS.md": "46057e146dcd254a2f796a2d1112e1fb11839bdd7e86666d35fb18070193f50f",
+    "AGENTS.md": "8d5990d60cec586cde5527ba613e2283940bdcafef5c13e2464375d0ee7b758d",
     "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
     "setup-sb.py": "bb69ad7fa8a0e4109fc460c62cd84a08adbc46dd80c74e2f2662651304724fcc"
   },
-  "sb": "0.4.0"
+  "sb": "0.5.0"
 }

@@ -20,7 +20,7 @@ Each answer carries a **choice**, a **probability** `p` (0 to 1: how likely that
 | Q | Question | Choices |
 |---|---|---|
 | Q1 `relevance` | How much does this source serve the vault's goals? | `high`, `medium`, `low`, `off-topic`, `unknown` |
-| Q2 `yields` | What would compiling it mainly produce? | `source`, `concept`, `entity`, `analysis`, `none` |
+| Q2 `yields` | What would compiling it mainly produce? | `source`, `concept`, `entity`, `analysis`, `procedure`, `incident`, `none` |
 | Q3 `overlap` | How does it relate to what the wiki holds? | `new`, `overlaps`, `duplicate` (name the pages for the last two). Answer `duplicate` only after you have read the page it duplicates: a similar title is not enough |
 | Q4 `needs_human` | Is there a reason a person must look first? | `yes`, `no` (yes for credentials, personal data, an unclear scope, or a claim you cannot place) |
 
@@ -40,7 +40,7 @@ Do not write a summary of the source or any wiki page here. A source that is mos
 For each source, the first rule that matches wins. `yields` only informs the order and the plan: it never triggers a rule, and its `c` does not count.
 1. `needs_human` is `yes`, or the `c` of `relevance`, `overlap` or `needs_human` is below 0.6: **ask the curator**. Say what you could not judge.
 2. `relevance` is `off-topic` with `p` at least 0.8, or `overlap` is `duplicate` with `p` at least 0.8: **propose** `sb ingest skip <id> --reason "<one line>"`.
-3. `relevance` is `high` or `medium` with `p` at least 0.5, and `overlap` is `new`: **propose to ingest**, ordered by `relevance`, then by `p`.
+3. `relevance` is `high` or `medium` with `p` at least 0.5, and `overlap` is `new`: **propose to ingest**, ordered by `relevance`, then by `p`. A source whose sidecar has `supersedes` is a new version of one already compiled: answer `overlap` as `overlaps` (name the pages that cite the older one), and **propose to ingest as an update** of those pages, never `skip`. Sources from one `sb import` share a label in their `origin`: present them together.
 4. Anything else (`low`, `overlaps`, `unknown`, or a choice of rules 2 or 3 whose `p` is too low): **ask the curator**. For `overlaps`, name the page and what the source might add to it.
 
 Show the proposal as a numbered list, one line per source with its rule number and its reason, and wait. Skip or ingest only what the curator approves, one source at a time (the `ingest` skill from here). Then run `sb log triage "<n to ingest, n asked, n skipped>"`.

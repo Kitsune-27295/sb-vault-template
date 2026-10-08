@@ -1,6 +1,6 @@
 ---
 name: query
-description: Answers a question from the vault's compiled wiki with citations, searching before reading, and files valuable answers back as analysis pages. Use when the curator asks what the knowledge base says, knows or connects about a topic, or asks for a comparison, summary or synthesis of stored knowledge.
+description: Answers a question from the vault's compiled wiki with citations, searching before reading, and files valuable answers back as analysis pages. Use when the curator asks what the knowledge base says, knows or connects about a topic, how to do something that is documented (a procedure or runbook), what happened in an incident, or asks for a comparison, summary or synthesis of stored knowledge.
 ---
 
 # Answer from the vault
@@ -14,11 +14,12 @@ description: Answers a question from the vault's compiled wiki with citations, s
      - function words ("de", "com", "the") are ignored;
      - all remaining words must match, falling back to any of them;
      - there is no stemming, so use a prefix such as `recupera*` to catch "recuperação" and "recuperar".
-   - Narrow the search when the question names a kind of page: `--type analysis` for past syntheses, `--type decision` for decisions, `--zone wiki` to leave notes and memory out. The filter applies before `-k`, so you still get 8 pages that match.
-   - Judge relevance from `title` and `snippet` before opening anything. `--explain` adds the raw score and the zone weight when a ranking looks wrong. When the words you try find nothing but the question is clear, `--semantic` ranks by meaning, but only if `.sb/vectors.sqlite` exists or the curator asked for it (the first run downloads a model of about 1 GB). It takes about 3 s and cannot be combined with `--type`, `--zone` or `--explain`. It always returns pages, even for a question the vault does not cover, and a hit marked `(by meaning)` matched none of your words: its snippet is only the start of the piece that matched, so open the page and check that it says what you need before you cite it.
-2. **Read only what the hits justify.** Open the top pages. Follow `[[links]]` one hop when a page points to a better one. Read `index.md` only if search finds nothing.
+   - Narrow the search when the question names a kind of page: `--type analysis` for past syntheses, `--type decision` for decisions, `--type procedure` for "how do I …" questions, `--type incident` for "what happened …", `--zone wiki` to leave notes and memory out. The filter applies before `-k`, so you still get 8 pages that match.
+   - Judge relevance from `title` and `snippet` before opening anything. `--explain` adds the raw score and the zone weight when a ranking looks wrong. When the words you try find nothing but the question is clear, `--semantic` ranks by meaning, but only if `.sb/vectors.sqlite` exists or the curator asked for it (the first run downloads a model of about 1 GB). It takes about 3 s, works with `--type` and `--zone`, and cannot be combined with `--explain`. It always returns pages, even for a question the vault does not cover, and a hit marked `(by meaning)` matched none of your words: its snippet is only the start of the piece that matched, so open the page and check that it says what you need before you cite it.
+2. **Read only what the hits justify.** Open the top pages. Follow `[[links]]` one hop when a page points to a better one, and run `sb related "<page>"` on the best hit when the question is about what else touches it: it lists the pages that link to it, draw on the same sources, say similar things or name it without a link. Read `index.md` only if search finds nothing.
 3. **Answer with citations.**
    - Every claim names its page as `[[Page]]`, plus the `path:line` citation from the search hit.
+   - Say how old each cited page is: its `updated` date if it has one, and for a `procedure` or `incident` page always the date, or that it has none. If its `review_by` date has passed, say so and present the page as possibly out of date.
    - Keep each page's distinction between verified fact and an author's claim.
    - When pages disagree, show both sides.
 4. **Say what the vault does not cover.** If search and reading find nothing, say so plainly and list the queries you tried. Suggest a source worth capturing. Do not fill the gap from general knowledge without marking it as such.

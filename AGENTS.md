@@ -21,8 +21,11 @@ This vault is an LLM Wiki with operational memory, maintained by an agent and ch
 
 ```yaml
 type: concept        # source | concept | entity | analysis | decision | journal | context
+                     # | procedure (ordered steps to do something) | incident (what broke, why, the fix)
 description: One line; it is also the catalogue line in index.md.
 sources: [20260930-example-source]   # wiki pages: source ids (inbox or frozen) it draws on
+updated: 2026-10-08       # optional: when the page was last confirmed (YYYY-MM-DD)
+review_by: 2027-04-08     # optional: check the page again by this date; `sb lint` warns after it
 ```
 
 - File names are the page names. Never use `# | ^ : [ ] %` in a name.
@@ -58,6 +61,7 @@ The session brief (`sb memory brief`) loads automatically at session start, and 
 ```
 sb clip <link>... [--from links.txt] [--limit N]   # capture pages, PDFs, videos, playlists; skips known links
 sb capture <file> [--url U] # give a file a source id; --url records where it was clipped from
+sb import <folder> [--label L] [--dry-run] [--json]   # mirror a folder of md/txt/html/pdf into the inbox; changed files become new versions
 sb ingest plan <id>        # JSON: the source and candidate pages to touch
 sb ingest close <id> [--dry-run]   # validate citing pages -> freeze source -> log -> index
 sb ingest pending [--json] # the inbox, and frozen sources no wiki page cites
@@ -65,6 +69,7 @@ sb ingest skip <id> --reason "<why>"   # a source deliberately not compiled
 sb search "<terms>" [-k N] [--type T] [--zone Z] [--explain] [--semantic] [--json]
 sb lint [--json] [--path P]   # must report no errors
 sb candidates [--json]     # consolidation leads to judge
+sb related <page> [-k N] [--json]   # links in and out, shared sources, similar words and meaning, unlinked mentions
 sb log <op> "<title>"      # record a query, analysis, wrapup or consolidate in the log
 sb memory brief            # working memory, open decisions, inbox, health
 sb eval [--record] [--baseline]   # retrieval quality on eval/queries.yaml; compare with the last run
