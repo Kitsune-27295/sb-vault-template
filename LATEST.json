@@ -1,7 +1,7 @@
 {
-  "version": "0.3.0",
-  "wheel": "sb-0.3.0-py3-none-any.whl",
-  "sha256": "5c8c612fb342a7f6986bdafc3db8d275914bb175f87484217ea4d0e82e23a014",
+  "version": "0.3.1",
+  "wheel": "sb-0.3.1-py3-none-any.whl",
+  "sha256": "5613c419e065be30bab8f42cbc4b1045fc9b1dfc57409b623e576b0766d2bddc",
   "constraints": "constraints.txt",
   "constraints_sha256": "bb0eb6df90de187cffdeea8eb44370b48e55bf220e1a5b6dd369b97ddd24b041"
 }
