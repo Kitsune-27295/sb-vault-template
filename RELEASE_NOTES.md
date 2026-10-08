@@ -1,7 +1,9 @@
-### Fixed
-- Deleted text no longer stays readable inside `.sb/index.sqlite` after many pages are removed at once; the fix of 0.3.0 only covered small deletions.
-- `sb clip` no longer prints a password, token, session or `Authorization` header from a link on any path, including an invalid link; a link that carries `user:password@` is refused. What is stored keeps the link as given.
-- `sb upgrade` refuses to run in a vault that a newer `sb` has already upgraded, instead of putting older framework files over newer ones; `sb doctor` warns about it.
-- A closed pipe on Windows (`sb search ... | head`) is no longer reported as a disk error.
-- `sb ingest pending` says how to give an id to a file dropped in the inbox.
-- Search ignores question words (`quem`, `qual`, `onde`, `quando`, `who`, `what`, `where`...): "quem é X" now looks for X instead of requiring the word `quem` in the page.
+### Added
+- `sb lint` warns (`UNI001`) about invisible characters in a page, where they can hide an instruction from a reviewer. Captured sources are not checked.
+- `sb eval --baseline` also compares each kind of query, and says so when one kind fell while the total did not.
+- Optional semantic search (`pip install "sb[vector]"`): `sb index vectors` embeds your pages, `sb search "..." --semantic` ranks by meaning fused with the words (each page is cut in overlapping pieces, so the tail of a long page is found), and `sb eval --semantic --baseline` compares it with the lexical search on your own queries and says which search the baseline was. Off by default: it downloads a model of about 1 GB once and takes about 3 s per command. A hit found only by meaning is marked `(by meaning)`, shows the start of the piece that matched and cites its line. A plain `sb search` is unchanged.
+- A `triage` skill: it asks the same four typed questions of every pending source (how relevant, what it would yield, how it overlaps the wiki, whether a person must look first), answers each with a choice, a probability and a confidence, and a fixed policy proposes what to ingest, skip or ask about. It reaches your vault with `sb upgrade`.
+
+### Changed
+- A symlink or junction inside a vault is no longer followed: a linked file is not indexed or checked, so a shared vault cannot pull in a file from outside it.
+- The session brief marks `memory/hot.md` as notes from earlier sessions, not instructions.
