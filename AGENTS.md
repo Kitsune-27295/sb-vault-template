@@ -59,12 +59,14 @@ sb clip <link>... [--from links.txt] [--limit N]   # capture pages, PDFs, videos
 sb capture <file> [--url U] # give a file a source id; --url records where it was clipped from
 sb ingest plan <id>        # JSON: the source and candidate pages to touch
 sb ingest close <id> [--dry-run]   # validate citing pages -> freeze source -> log -> index
-sb search "<terms>" [-k N] [--json]
+sb ingest pending [--json] # the inbox, and frozen sources no wiki page cites
+sb ingest skip <id> --reason "<why>"   # a source deliberately not compiled
+sb search "<terms>" [-k N] [--type T] [--zone Z] [--explain] [--json]
 sb lint [--json] [--path P]   # must report no errors
 sb candidates [--json]     # consolidation leads to judge
 sb log <op> "<title>"      # record a query, analysis, wrapup or consolidate in the log
 sb memory brief            # working memory, open decisions, inbox, health
-sb eval                    # retrieval quality on eval/queries.yaml
+sb eval [--record] [--baseline]   # retrieval quality on eval/queries.yaml; compare with the last run
 sb index rebuild           # regenerate index.md and the search index
 sb doctor                  # environment check
 sb hook install            # once per machine/clone: this machine's hooks (gitignored)

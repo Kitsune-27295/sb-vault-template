@@ -3,4 +3,5 @@
 #
 # - query: diferença entre RAG e LLM Wiki
 #   expect: [LLM Wiki, RAG]
+#   kind: paraphrase        # optional label: `sb eval` then reports recall per kind
 []

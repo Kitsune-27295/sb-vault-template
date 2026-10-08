@@ -8,6 +8,7 @@ description: Compiles one captured source into the vault's wiki (source page, co
 Work on **one source at a time**. To ingest a batch, repeat the whole loop for each source.
 
 ## 1. Capture and inspect
+0. **When no source was named,** run `sb ingest pending`. It lists the inbox and the frozen sources no wiki page cites. Offer the curator one to work on. A source that should not be compiled is recorded with `sb ingest skip <id> --reason "<why>"`, never by deleting it.
 1. **Get an id.**
    - For **links** (pages, PDFs, videos, playlists), run `sb clip <link>...`. It prints `captured <id>`, or `exists <id>` when the vault already has the link or the same content, in which case there is nothing to ingest.
    - For a **file path** (inside or outside `sources/inbox/`), run `sb capture "<path>"`. It prints the id.

@@ -14,7 +14,8 @@ description: Answers a question from the vault's compiled wiki with citations, s
      - function words ("de", "com", "the") are ignored;
      - all remaining words must match, falling back to any of them;
      - there is no stemming, so use a prefix such as `recupera*` to catch "recuperação" and "recuperar".
-   - Judge relevance from `title` and `snippet` before opening anything.
+   - Narrow the search when the question names a kind of page: `--type analysis` for past syntheses, `--type decision` for decisions, `--zone wiki` to leave notes and memory out. The filter applies before `-k`, so you still get 8 pages that match.
+   - Judge relevance from `title` and `snippet` before opening anything. `--explain` adds the raw score and the zone weight when a ranking looks wrong.
 2. **Read only what the hits justify.** Open the top pages. Follow `[[links]]` one hop when a page points to a better one. Read `index.md` only if search finds nothing.
 3. **Answer with citations.**
    - Every claim names its page as `[[Page]]`, plus the `path:line` citation from the search hit.
