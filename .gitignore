@@ -1,4 +1,5 @@
 .sb/index.sqlite
+.sb/vectors.sqlite
 .obsidian/workspace*.json
 .env
 .env.*

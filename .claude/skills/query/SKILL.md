@@ -15,7 +15,7 @@ description: Answers a question from the vault's compiled wiki with citations, s
      - all remaining words must match, falling back to any of them;
      - there is no stemming, so use a prefix such as `recupera*` to catch "recuperação" and "recuperar".
    - Narrow the search when the question names a kind of page: `--type analysis` for past syntheses, `--type decision` for decisions, `--zone wiki` to leave notes and memory out. The filter applies before `-k`, so you still get 8 pages that match.
-   - Judge relevance from `title` and `snippet` before opening anything. `--explain` adds the raw score and the zone weight when a ranking looks wrong.
+   - Judge relevance from `title` and `snippet` before opening anything. `--explain` adds the raw score and the zone weight when a ranking looks wrong. When the words you try find nothing but the question is clear, `--semantic` ranks by meaning, but only if `.sb/vectors.sqlite` exists or the curator asked for it (the first run downloads a model of about 1 GB). It takes about 3 s and cannot be combined with `--type`, `--zone` or `--explain`. It always returns pages, even for a question the vault does not cover, and a hit marked `(by meaning)` matched none of your words: its snippet is only the start of the piece that matched, so open the page and check that it says what you need before you cite it.
 2. **Read only what the hits justify.** Open the top pages. Follow `[[links]]` one hop when a page points to a better one. Read `index.md` only if search finds nothing.
 3. **Answer with citations.**
    - Every claim names its page as `[[Page]]`, plus the `path:line` citation from the search hit.

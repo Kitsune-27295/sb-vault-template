@@ -48,6 +48,7 @@ sources: [20260930-example-source]   # wiki pages: source ids (inbox or frozen) 
 | A question about stored knowledge | `query` | search → read → cited answer → file it back as `analysis` |
 | The session ends | `wrapup` | journal, decisions, lessons; trims `memory/hot.md` |
 | A new vault, or the curator's profile changes | `onboarding` | interview → `context/*.md`, after approval |
+| Several sources are pending | `triage` | typed questions per source → a fixed policy proposes ingest, skip or ask |
 | After a wave of ingests | `consolidate` | judge `sb candidates` → merge / supersede / reconcile |
 
 The session brief (`sb memory brief`) loads automatically at session start, and `sb lint` checks every file you edit. Run `wrapup` last in a session.
@@ -61,13 +62,14 @@ sb ingest plan <id>        # JSON: the source and candidate pages to touch
 sb ingest close <id> [--dry-run]   # validate citing pages -> freeze source -> log -> index
 sb ingest pending [--json] # the inbox, and frozen sources no wiki page cites
 sb ingest skip <id> --reason "<why>"   # a source deliberately not compiled
-sb search "<terms>" [-k N] [--type T] [--zone Z] [--explain] [--json]
+sb search "<terms>" [-k N] [--type T] [--zone Z] [--explain] [--semantic] [--json]
 sb lint [--json] [--path P]   # must report no errors
 sb candidates [--json]     # consolidation leads to judge
 sb log <op> "<title>"      # record a query, analysis, wrapup or consolidate in the log
 sb memory brief            # working memory, open decisions, inbox, health
 sb eval [--record] [--baseline]   # retrieval quality on eval/queries.yaml; compare with the last run
 sb index rebuild           # regenerate index.md and the search index
+sb index vectors           # optional: embed the pages for `search --semantic` (the `vector` extra)
 sb doctor                  # environment check
 sb hook install            # once per machine/clone: this machine's hooks (gitignored)
 ```
