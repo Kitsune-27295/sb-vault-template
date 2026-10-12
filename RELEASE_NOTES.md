@@ -1,12 +1,14 @@
 ### Added
-- `sb lint` says what it checked: `checked N page(s), M source(s): <families>`. A check that crashes is reported as `LNT001` (an error) and never as a clean run.
-- `sb search --explain` shows the tier of each hit (`identity`, `prefix`, `bm25`).
-- `sb import` skips `node_modules`, `__pycache__` and `site-packages` folders, saying so once. A vault written in a newer layout than your `sb` knows is refused with the way out (update `sb`). The log merges by union, so two machines that both appended keep both (ADR-035).
+- `CONVENTIONS.md` in every vault: the rules you and the agent agree on, which `sb upgrade` never rewrites. `AGENTS.md` stays the framework's (ADR-037).
+- `sb init --agents` and `sb upgrade --agents` also install the skills where Antigravity reads them (`.agents/skills/`); `docs/harnesses.md` says how to work without hooks.
+- `sb clip --allow-local` to fetch a local documentation server.
 
 ### Changed
-- `sb lint --json` is now an object (`findings`, `ran`, `crashed`, `pages`, `sources`, `errors`, `warnings`) instead of a bare list, and the text output stops after `--limit` findings (100) and says how many more there are (ADR-034).
-- A page named exactly like the query comes first in `sb search`, then a page whose name starts with it, then the rest by relevance. On the curator's vault that took the name of a page to rank first in 120 of 120 samples (it was 111).
+- After an edit, the hook tells the agent about warnings (an orphan page, a review date past) as a note, not a block; errors still block. It no longer hashes every frozen source on each edit, and each hook has a time limit (ADR-036).
+- The session brief quotes `memory/hot.md` and cuts what is too long, one line per decision, and says when framework files are out of date.
+- `sb clip` fetches only `http` and `https`, and refuses localhost, loopback and link-local addresses (cloud metadata), also when a page redirects to one. Private network addresses still work.
+- Skill descriptions start with when to use them, which also takes about a fifth off what every session pays for.
+- The shared settings deny editing `log/`, `.sb/`, `.githooks/` and the settings files; the per-machine settings allow the `"<python>" -m sb` form the brief gives when `sb` is not on PATH.
 
 ### Fixed
-- The weekly update workflow of a vault passes its input to the commit message through a variable instead of expanding it inside the script.
-- `[[wiki/Alvo]]`, a path-qualified link, resolves like in Obsidian (and is a dead link when the folder is wrong); a page name typed in another Unicode form (macOS) matches; a frontmatter key written twice is an error instead of silently keeping the last.
+- An IPv6 literal in a link to `sb clip` is one failed link, not a traceback.
