@@ -75,6 +75,7 @@ jobs:
         if: ${{ !inputs.dry-run }}
         env:
           GH_TOKEN: ${{ github.token }}
+          TEMPLATE_REF: ${{ inputs.template-ref }}
         run: |
           if [ -z "$(git status --porcelain)" ]; then
             echo "Already up to date; no pull request."
@@ -96,7 +97,7 @@ jobs:
           git switch -C "$BRANCH"
           git add -A
           git commit -q -m "Update sb framework files to $version" \
-            -m "Automatic via update-vault (Kitsune-27295/sb-vault-template@${{ inputs.template-ref }})."
+            -m "Automatic via update-vault (Kitsune-27295/sb-vault-template@${TEMPLATE_REF})."
           git push --force origin "$BRANCH"
 
           base="$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)"
