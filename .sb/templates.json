@@ -4,14 +4,14 @@
     ".claude/skills/consolidate/SKILL.md": "c9a704a14200ebc9baa15a44d102ad76e983d2ec0fad9a6ef051a0db422b8af5",
     ".claude/skills/ingest/SKILL.md": "fc01b3adb2c664972e56518f6f6b9ee99a4ac82e8d59f5c643ff5cddc29279b3",
     ".claude/skills/onboarding/SKILL.md": "3782ed9d6975ab20fde0ac6f03e6370dddd8e417d4698d3b7ca2b0ff3f96fcb2",
-    ".claude/skills/query/SKILL.md": "eb1adb7a4fae425e2c14cf2dc31f6f52a0a8bf2e18285f39c4d52b546385b7fd",
+    ".claude/skills/query/SKILL.md": "69bc92b350a69e0031aee551ab087f3daf5f90078751d7ea5a515b731afc8079",
     ".claude/skills/triage/SKILL.md": "d50badf18f7b9e6dbafb63893120e79476615ad454f9a317d2e532d240580d1d",
     ".claude/skills/wrapup/SKILL.md": "54c24929033a86e282aace572d135218614fa60fa2df929d1ffb0a1c8846148b",
     ".gitattributes": "f935641dc23c309116b9f19c8a851a6a31b912626eca7f9cc8ed0a2474f9a039",
     ".github/workflows/sb-update.yml": "bda62f743bbcb08a4775fc0c0214e6ebcbc53f690b329a779a284d1a7e8c525a",
-    "AGENTS.md": "b0a0ad0d048cf7e7821bd9905a8a490e270b199e7cde3fa414add1f54aadb7d1",
+    "AGENTS.md": "40cc6aab2ea593231ac1bfe14ddb4d819411695465696fb46335e0985f9f358d",
     "CLAUDE.md": "cbbeb8bc0f6c5f3b34b9f824d589e73db03c3ab73bae4ce5617181382653386c",
     "setup-sb.py": "eb4c96be7a71e3b8842c0129005764686bed33411c414b38e19dfc0b88f9783d"
   },
-  "sb": "0.7.0"
+  "sb": "0.8.0"
 }

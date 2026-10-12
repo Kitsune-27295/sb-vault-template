@@ -64,6 +64,9 @@ sb search "<terms>" [-k N] [--type T] [--zone Z] [--explain] [--semantic] [--jso
 sb lint [--json] [--path P]   # must report no errors; one in log/ or sources/ is the curator's to fix
 sb candidates [--json]     # consolidation leads to judge
 sb related <page> [-k N] [--json]   # links in and out, shared sources, similar words and meaning, unlinked mentions
+sb page <page> [--json]    # one page's header: type, role, inbound links, age, sources, lint (read before opening a big file)
+sb graph [--orphans incoming|outgoing|both] [--hubs N] [--dead] [--json]   # roles, orphans, hubs, dead links
+sb mv <page> <new name or path> [--dry-run] | sb mv --undo   # rename or move; links follow; journalled
 sb log <op> "<title>"      # record a query, analysis, wrapup, triage or consolidate in the log
 sb memory brief            # working memory, open decisions, inbox, health
 sb eval [--record] [--baseline]   # retrieval quality on eval/queries.yaml; compare with the last run
