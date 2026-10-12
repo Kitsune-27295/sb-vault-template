@@ -13,11 +13,7 @@ Write into `memory/` only. Never touch `notes/`, `context/` or `sources/` here.
    - what happened;
    - what was found;
    - what comes next.
-2. **Decisions.** For each decision taken this session, create `memory/decisions/YYYY-MM-DD-<slug>.md` with:
-   - `type: decision`, `status: accepted` (or `proposed` if the curator has not confirmed it), and a `description`;
-   - the sections Context, Decision and Consequences.
-
-   **To reverse an earlier decision,** create a new record, then set the old one to `status: superseded` with `superseded_by: <new record name>`. Never rewrite the old decision.
+2. **Decisions.** For each decision taken this session that has no record yet, follow the `decide` skill: it checks for an earlier decision, writes the page and supersedes the one it replaces. Do not write a decision here by hand.
 3. **Lessons.** Add to `memory/lessons.md` any lesson learned the hard way, together with the incident that taught it. A lesson that repeats should become a rule in `CONVENTIONS.md`: propose that to the curator.
 4. **Working memory.** Rewrite `memory/hot.md` so it holds only what is still in flight: priorities, what is waiting on the curator, and what to remember. It must stay **at most 60 lines**; finished items move to the journal.
 5. **Check.** Run `sb lint` and fix every error it reports.

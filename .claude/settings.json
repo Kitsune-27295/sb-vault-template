@@ -21,7 +21,8 @@
     ],
     "ask": [
       "Edit(./CONVENTIONS.md)",
-      "Bash(sb clip *--allow-local*)"
+      "Bash(sb clip *--allow-local*)",
+      "Bash(sb uninstall *--apply*)"
     ]
   }
 }

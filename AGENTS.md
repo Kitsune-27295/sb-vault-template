@@ -29,8 +29,11 @@ review_by: 2027-04-08     # optional: check the page again by this date; `sb lin
 status: accepted          # decisions and pages that are replaced: proposed | accepted | superseded | rejected
 superseded_by: [[Newer page]]   # with status: superseded
 contradicts: [[Other page]]     # a declared conflict that `sb candidates` will list
+standalone: true          # optional: a page on purpose nobody links to (a README); silences ORP001
+source_commit: 3f2a9c1    # optional, on a page derived from code: the commit it describes
 ```
 
+- A page for an entity or a thing kept over time has a **Summary** you rewrite and a **Timeline** you only append to.
 - File names are the page names. Never use `# | ^ : [ ] %` in a name.
 - Link pages with `[[Page name]]`.
 - A subfolder inside `wiki/` appears only once 3 or more pages share a type. Propose it to the curator and name it after the type. Moving pages is safe, because links resolve by name, not path.
@@ -48,7 +51,7 @@ contradicts: [[Other page]]     # a declared conflict that `sb candidates` will 
 
 ## Skills and routines
 
-Each skill's description says when it applies (`ingest`, `query`, `wrapup`, `onboarding`, `triage`, `consolidate`). The session brief (`sb memory brief`) is loaded by the session-start hook and `sb lint` checks each file you edit, when the hooks are installed on this machine (`sb hook install`); without them, run both yourself. Run `wrapup` last in a session.
+Each skill's description says when it applies (`ingest`, `query`, `wrapup`, `onboarding`, `triage`, `consolidate`, `decide`, `postmortem`, `dossier`). The session brief (`sb memory brief`) is loaded by the session-start hook and `sb lint` checks each file you edit, when the hooks are installed on this machine (`sb hook install`); without them, run both yourself. Run `wrapup` last in a session.
 
 ## Commands
 
@@ -67,11 +70,14 @@ sb related <page> [-k N] [--json]   # links in and out, shared sources, similar 
 sb page <page> [--json]    # one page's header: type, role, inbound links, age, sources, lint (read before opening a big file)
 sb graph [--orphans incoming|outgoing|both] [--hubs N] [--dead] [--json]   # roles, orphans, hubs, dead links
 sb mv <page> <new name or path> [--dry-run] | sb mv --undo   # rename or move; links follow; journalled
-sb log <op> "<title>"      # record a query, analysis, wrapup, triage or consolidate in the log
+sb new <type> "<title>"    # a page of a type with its sections; gaps are marked [PENDING VALIDATION]
+sb pack <name>             # add a starter pack: research, engineering, entities
+sb log <op> "<title>"      # record a query, analysis, wrapup, triage, consolidate, decision, postmortem or dossier
 sb memory brief            # working memory, open decisions, inbox, health
 sb eval [--record] [--baseline]   # retrieval quality on eval/queries.yaml; compare with the last run
 sb index rebuild           # regenerate index.md and the search index
 sb index vectors           # optional: embed the pages for `search --semantic` (the `vector` extra)
-sb doctor                  # environment check
+sb doctor [--json] [--bundle FILE]   # environment check; a bundle holds counts, no content
+sb uninstall [--apply]     # what taking sb's files out would remove (asks before --apply)
 sb hook install            # once per machine/clone: this machine's hooks (gitignored)
 ```

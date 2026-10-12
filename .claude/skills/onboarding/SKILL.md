@@ -9,6 +9,15 @@ description: Use when a vault is new, when context/ is empty, or when the curato
 
 The aim is for the agent to stop asking questions the curator has already answered. The files this produces are the curator's, so **nothing is written without approval**.
 
+## When the vault or a folder already has material
+Before the interview, take stock. Never chain a step into the next without showing the curator what it found.
+1. **Baseline.** Run `sb graph` and `sb lint --limit 5` (the totals are in its last lines); keep the counts (pages, orphans, dead targets, errors).
+2. **Look at the folder.** For a folder the curator wants brought in, run `sb import <folder> --dry-run` and sort what it lists by top-level folder: what each holds, how many files, what kind.
+3. **Stop early on little.** Fewer than 5 files: do not look for a convention; bring them in and go to the interview.
+4. **Find a convention only where it repeats.** If two or more sibling files share the same headings, propose that structure as a page type or a template; otherwise propose nothing.
+5. **Approve, then import.** Show the curator the plan (what comes in, what is left out, any convention). Only after approval run `sb import <folder>`.
+6. **Compare.** Run `sb graph` and `sb lint --limit 5` again and report the change: new pages, orphans, dead targets. Say whether this was an *initial* import (the vault was empty) or an *extension*.
+
 ## Before asking anything
 - Ask whether existing material already answers some questions: a CV, a bio, notes, a README, older instruction files.
 - Read what is offered, extract what it says, and **skip the questions it already answers**.

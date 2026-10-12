@@ -23,7 +23,7 @@ description: Use when the curator asks what the knowledge base says, knows or co
    - Keep each page's distinction between verified fact and an author's claim.
    - When pages disagree, show both sides.
 4. **Say what the vault does not cover.** If search and reading find nothing, say so plainly and list the queries you tried. Suggest a source worth capturing. Do not fill the gap from general knowledge without marking it as such.
-5. **File back.** When the answer is a synthesis worth keeping (a comparison, a connection, a decision aid), offer to save it as a wiki page:
+5. **File back.** Offer to save the answer as a wiki page only when all four hold: it will still be true next month, it draws on more than one page, no page already says it, and every claim has a source. Say which one failed when you do not offer. Then:
    - frontmatter: `type: analysis`, a one-line `description`, and `sources:` set to the union of the sources behind the pages you cited;
    - links to every page it draws on.
 
