@@ -1,8 +1,12 @@
 ### Added
-- `sb clip` captures the code examples of pages that draw them with JavaScript (documentation with an interactive editor, such as Mermaid's), using the Edge or Chrome already installed. It is the opt-in extra `python setup-sb.py --extra render`; without it such a page now fails with that instruction instead of being captured without its examples (ADR-033).
+- `sb lint` says what it checked: `checked N page(s), M source(s): <families>`. A check that crashes is reported as `LNT001` (an error) and never as a clean run.
+- `sb search --explain` shows the tier of each hit (`identity`, `prefix`, `bm25`).
+- `sb import` skips `node_modules`, `__pycache__` and `site-packages` folders, saying so once. A vault written in a newer layout than your `sb` knows is refused with the way out (update `sb`). The log merges by union, so two machines that both appended keep both (ADR-035).
 
 ### Changed
-- A captured page's links are cleaned: heading anchors, `#fragment` and self links and tracking parameters are removed, and relative links of a web page become absolute (an imported export keeps its relative links). Addresses with parentheses, code blocks and images are untouched, and a query string is only rewritten when a tracker leaves it (ADR-033). A folder you imported before is still `unchanged` on the next `sb import`.
+- `sb lint --json` is now an object (`findings`, `ran`, `crashed`, `pages`, `sources`, `errors`, `warnings`) instead of a bare list, and the text output stops after `--limit` findings (100) and says how many more there are (ADR-034).
+- A page named exactly like the query comes first in `sb search`, then a page whose name starts with it, then the rest by relevance. On the curator's vault that took the name of a page to rank first in 120 of 120 samples (it was 111).
 
 ### Fixed
-- `setup-sb.py` takes `--extra render` and `--extra vector`, and an update keeps them. Until now a vault had no way to install either extra, and the messages sent you to a command that only works in a source checkout.
+- The weekly update workflow of a vault passes its input to the commit message through a variable instead of expanding it inside the script.
+- `[[wiki/Alvo]]`, a path-qualified link, resolves like in Obsidian (and is a dead link when the folder is wrong); a page name typed in another Unicode form (macOS) matches; a frontmatter key written twice is an error instead of silently keeping the last.
