@@ -10,7 +10,7 @@ Work on **one source at a time**. To ingest a batch, repeat the whole loop for e
 ## 1. Capture and inspect
 0. **When no source was named,** run `sb ingest pending`. It lists the inbox and the frozen sources no wiki page cites. Offer the curator one to work on. A source that should not be compiled is recorded with `sb ingest skip <id> --reason "<why>"`, never by deleting it.
 1. **Get an id.**
-   - For **links** (pages, PDFs, videos, playlists), run `sb clip <link>...`. It prints `captured <id>`, or `exists <id>` when the vault already has the link or the same content, in which case there is nothing to ingest.
+   - For **links** (pages, PDFs, videos, playlists), run `sb clip <link>...`. It prints `captured <id>`, or `exists <id>` when the vault already has the link or the same content, in which case there is nothing to ingest. A page whose code examples are drawn by JavaScript is rendered in the installed Edge or Chrome; if `sb clip` reports `failed` and asks for the render extra, tell the curator to run `python setup-sb.py --extra render` in the vault, then clip the link again instead of accepting a capture without its examples. Links in a capture are already cleaned (no heading anchors, `#fragments` or tracking parameters), so do not add them back.
    - For a **file path** (inside or outside `sources/inbox/`), run `sb capture "<path>"`. It prints the id.
    - For a **folder** of exported documents, run `sb import "<folder>"` (add `--dry-run` first to see what it would do). A file it already holds is `unchanged`; a file that changed is `updated`, a new source that **replaces** an older one; a file that left the folder is `gone` and its source stays.
 2. **Get the context** with `sb ingest plan <id>`. The JSON gives you:

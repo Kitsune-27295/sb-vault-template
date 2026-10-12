@@ -4,6 +4,7 @@
     python setup-sb.py --check          # show what is installed and what is newest; change nothing
     python setup-sb.py --tool-only      # install or update `sb` only; leave this vault alone (CI)
     python setup-sb.py --add-to-path    # also put `sb` on your PATH (Windows: the user PATH)
+    python setup-sb.py --extra render   # add an optional extra (render, vector); kept on updates
 
 No GitHub account or key is needed. The tool is downloaded over HTTPS from a public repository and
 its sha256 is checked before anything is installed. `sb` lives in one folder per machine, shared by
@@ -30,6 +31,7 @@ SOURCE = os.environ.get(
 )
 VAULT = Path(__file__).resolve().parent
 WINDOWS = sys.platform == "win32"
+EXTRAS = ("render", "vector")  # optional; `capture` is always installed
 
 
 def tool_home() -> Path:
@@ -62,6 +64,17 @@ def installed(home: Path) -> dict[str, str] | None:
     except (OSError, ValueError):
         return None
     return data if isinstance(data, dict) and venv_python(home).exists() else None
+
+
+def kept_extras(home: Path) -> list[str]:
+    """The extras asked for earlier. Read apart from `installed`, which needs the venv to exist:
+    a venv that was deleted and is created again must come back with them."""
+    try:
+        data = json.loads((home / "installed.json").read_text(encoding="utf-8"))
+        names = str(data.get("extras", "")).split(",") if isinstance(data, dict) else []
+    except (OSError, ValueError):
+        names = []
+    return [n for n in names if n in EXTRAS]
 
 
 class ChecksumError(ValueError):
@@ -97,7 +110,7 @@ def run(*args: str | Path) -> None:
     subprocess.run([str(a) for a in args], check=True)
 
 
-def install(info: dict[str, str], home: Path) -> None:
+def install(info: dict[str, str], home: Path, extras: list[str]) -> None:
     python = venv_python(home)
     if not python.exists():
         print(f"creating {home / 'venv'}", flush=True)
@@ -110,19 +123,20 @@ def install(info: dict[str, str], home: Path) -> None:
         # no wheel fails here instead of running its build script on your machine.
         run(
             *(python, "-m", "pip", "install", "--quiet", "--upgrade"),
-            *("--only-binary", ":all:", "-c", pins, f"{wheel}[capture]"),
+            *("--only-binary", ":all:", "-c", pins, f"{wheel}[{','.join(['capture', *extras])}]"),
         )
         if before is None or before.get("sha256") != info["sha256"]:
             # Same version number, different build: pip would call it "already satisfied".
             run(python, "-m", "pip", "install", "--quiet", "--force-reinstall", "--no-deps", wheel)
-    (home / "installed.json").write_text(json.dumps(info) + "\n", encoding="utf-8", newline="\n")
+    record = {**info, "extras": ",".join(extras)}
+    (home / "installed.json").write_text(json.dumps(record) + "\n", encoding="utf-8", newline="\n")
 
 
-def install_with_retries(info: dict[str, str], home: Path) -> None:
+def install_with_retries(info: dict[str, str], home: Path, extras: list[str]) -> None:
     """Right after a publish the files can briefly disagree: wait, ask again, keep the check."""
     for attempt in range(1, 4):
         try:
-            install(info, home)
+            install(info, home, extras)
             return
         except ChecksumError:
             if attempt == 3:
@@ -163,6 +177,9 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="change nothing, just report")
     parser.add_argument("--tool-only", action="store_true", help="do not wire this vault")
     parser.add_argument("--add-to-path", action="store_true", help="put `sb` on your PATH")
+    parser.add_argument(
+        "--extra", action="append", choices=EXTRAS, default=[], help="add an optional extra"
+    )
     args = parser.parse_args()
     if sys.version_info < (3, 12):  # noqa: UP036 - this file may be run by an older Python
         print(f"sb needs Python 3.12 or newer; this is {sys.version.split()[0]}", file=sys.stderr)
@@ -180,12 +197,15 @@ def main() -> int:
         print("Check your connection and try again. Nothing was changed.", file=sys.stderr)
         return 1
     have = installed(home)
-    print(f"installed: {have['version'] if have else 'none'}   newest: {newest['version']}")
+    kept = kept_extras(home)
+    version = (have["version"] if have else "none") + "".join(f" + {name}" for name in kept)
+    print(f"installed: {version}   newest: {newest['version']}")
     if args.check:
         return 0
-    if have is None or have.get("sha256") != newest["sha256"]:
+    extras = sorted({*kept, *args.extra})  # what was asked for once stays through updates
+    if have is None or have.get("sha256") != newest["sha256"] or extras != kept:
         try:
-            install_with_retries(newest, home)
+            install_with_retries(newest, home, extras)
         except (ValueError, subprocess.CalledProcessError, OSError) as exc:
             print(f"install failed: {exc}", file=sys.stderr)
             return 1

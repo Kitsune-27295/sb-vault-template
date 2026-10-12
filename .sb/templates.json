@@ -2,7 +2,7 @@
   "files": {
     ".claude/settings.json": "3a06908cbad852c41a7d9936794e37761ce46f2cb33f662f8088ff61d593ae05",
     ".claude/skills/consolidate/SKILL.md": "8d03fc3da76dffaf95ef219147cf07efb10bdefc24c50d3bbe9d99cd7706d250",
-    ".claude/skills/ingest/SKILL.md": "15bfd8304827b364ce5ca525200eadd6bf0810d3c54d184ce466c4fcc547d363",
+    ".claude/skills/ingest/SKILL.md": "58fda82825285b9c40a69c2300c2a8577d824ddb240c39c40e5fb44b501c082d",
     ".claude/skills/onboarding/SKILL.md": "0d844c8416f754c5d0282d56b865292c7690b612fe8e5a70fa1d7a2bca885dd4",
     ".claude/skills/query/SKILL.md": "3fa1892b82eef8af5d49a34b1c5f893a4d7801972e7230b80551f6196583c7b3",
     ".claude/skills/triage/SKILL.md": "b9a06f48d6288e9b533c86349cc5483249a8a9c78099ff5230d5be4228a0e45e",
@@ -11,7 +11,7 @@
     ".github/workflows/sb-update.yml": "bda62f743bbcb08a4775fc0c0214e6ebcbc53f690b329a779a284d1a7e8c525a",
     "AGENTS.md": "8d5990d60cec586cde5527ba613e2283940bdcafef5c13e2464375d0ee7b758d",
     "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
-    "setup-sb.py": "bb69ad7fa8a0e4109fc460c62cd84a08adbc46dd80c74e2f2662651304724fcc"
+    "setup-sb.py": "eb4c96be7a71e3b8842c0129005764686bed33411c414b38e19dfc0b88f9783d"
   },
-  "sb": "0.5.2"
+  "sb": "0.5.3"
 }
