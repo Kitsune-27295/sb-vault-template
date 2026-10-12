@@ -1,6 +1,6 @@
 ---
 name: onboarding
-description: Interviews the curator one question at a time to build the vault's context files (identity, work, goals, preferences), proposes each file and writes it only after approval. Use when a vault is new, when context/ is empty, or when the curator asks to set up, redo or update their profile or preferences.
+description: Use when a vault is new, when context/ is empty, or when the curator asks to set up, redo or update their profile or preferences. Interviews one question at a time, proposes each context file and writes it only after approval.
 ---
 
 # Onboarding interview

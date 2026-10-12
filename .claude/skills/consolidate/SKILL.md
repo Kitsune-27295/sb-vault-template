@@ -1,6 +1,6 @@
 ---
 name: consolidate
-description: Maintains the wiki's health by judging consolidation leads (near-duplicate pages, stale links to superseded pages, declared contradictions, open lint warnings) and proposing merges, supersessions and reconciliations for approval. Use when the curator asks to clean up, consolidate, review or audit the vault, or after a wave of several ingests.
+description: Use when the curator asks to clean up, consolidate, review or audit the vault, or after a wave of several ingests. Judges consolidation leads (near-duplicate pages, stale links, contradictions, lint warnings) and proposes merges, supersessions and reconciliations for approval.
 ---
 
 # Consolidate the wiki

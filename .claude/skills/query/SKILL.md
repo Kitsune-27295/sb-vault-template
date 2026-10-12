@@ -1,6 +1,6 @@
 ---
 name: query
-description: Answers a question from the vault's compiled wiki with citations, searching before reading, and files valuable answers back as analysis pages. Use when the curator asks what the knowledge base says, knows or connects about a topic, how to do something that is documented (a procedure or runbook), what happened in an incident, or asks for a comparison, summary or synthesis of stored knowledge.
+description: Use when the curator asks what the knowledge base says, knows or connects about a topic, how to do a documented procedure, what happened in an incident, or for a comparison, summary or synthesis of stored knowledge. Answers from the wiki with citations, searching before reading, and files valuable answers back as analysis pages.
 ---
 
 # Answer from the vault

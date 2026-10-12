@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Classifies each pending source with the same four typed questions (relevance, what it would yield, overlap, needs a human), answers each with a choice, a probability and a confidence, and turns them into a next step by a fixed policy. Use when `sb ingest pending` lists several sources, or the curator asks which sources are worth compiling or what to ingest first.
+description: Use when the curator asks which sources are worth compiling or what to ingest first, or when `sb ingest pending` lists several sources. Classifies each with four typed questions and a fixed policy that proposes ingest, skip or ask.
 ---
 
 # Triage the pending sources

@@ -1,6 +1,6 @@
 ---
 name: ingest
-description: Compiles one captured source into the vault's wiki (source page, concept and entity pages, links), with a plan the curator approves first, and closes it with `sb ingest close`. Use when the curator drops or captures a new source, gives links (pages, PDFs, videos, playlists), says "ingest", or asks to add an article, transcript or document to the knowledge base.
+description: Use when the curator drops or captures a new source, gives links (pages, PDFs, videos, playlists), says "ingest", or asks to add an article, transcript or document to the knowledge base. Compiles one source into wiki pages with a plan the curator approves first, then closes it with `sb ingest close`.
 ---
 
 # Ingest one source

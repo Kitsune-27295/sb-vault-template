@@ -12,7 +12,16 @@
       "Edit(./sources/*.md)",
       "Edit(./sources/*.meta.json)",
       "Edit(./sources/inbox/**)",
-      "Edit(./index.md)"
+      "Edit(./index.md)",
+      "Edit(./log/**)",
+      "Edit(./.sb/**)",
+      "Edit(./.githooks/**)",
+      "Edit(./.claude/settings.json)",
+      "Edit(./.claude/settings.local.json)"
+    ],
+    "ask": [
+      "Edit(./CONVENTIONS.md)",
+      "Bash(sb clip *--allow-local*)"
     ]
   }
 }
