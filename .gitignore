@@ -1,5 +1,10 @@
 .sb/index.sqlite
 .sb/vectors.sqlite
+# SQLite's own working files, and the copies kept when an index is moved aside
+.sb/*.sqlite-journal
+.sb/*.sqlite-shm
+.sb/*.sqlite-wal
+.sb/*.bak-*
 .obsidian/workspace*.json
 .env
 .env.*
