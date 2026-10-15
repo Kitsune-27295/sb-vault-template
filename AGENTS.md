@@ -51,7 +51,7 @@ source_commit: 3f2a9c1    # optional, on a page derived from code: the commit it
 
 ## Skills and routines
 
-Each skill's description says when it applies (`ingest`, `query`, `wrapup`, `onboarding`, `triage`, `consolidate`, `decide`, `postmortem`, `dossier`). The session brief (`sb memory brief`) is loaded by the session-start hook and `sb lint` checks each file you edit, when the hooks are installed on this machine (`sb hook install`); without them, run both yourself. Run `wrapup` last in a session.
+Each skill's description says when it applies (`ingest`, `query`, `wrapup`, `onboarding`, `triage`, `consolidate`, `decide`, `postmortem`, `dossier`, `research`). The session brief (`sb memory brief`) is loaded by the session-start hook and `sb lint` checks each file you edit, when the hooks are installed on this machine (`sb hook install`); without them, run both yourself. Run `wrapup` last in a session.
 
 ## Commands
 
@@ -63,7 +63,7 @@ sb ingest plan <id>        # JSON: the source and candidate pages to touch
 sb ingest close <id> [--dry-run]   # validate citing pages -> freeze source -> log -> index
 sb ingest pending [--json] # the inbox, and frozen sources no wiki page cites
 sb ingest skip <id> --reason "<why>"   # a source deliberately not compiled
-sb search "<terms>" [-k N] [--type T] [--zone Z] [--explain] [--semantic] [--json]
+sb search "<terms>" [-k N] [--type T] [--zone Z] [--path P]... [--explain] [--semantic] [--json]
 sb lint [--json] [--path P]   # must report no errors; one in log/ or sources/ is the curator's to fix
 sb candidates [--json]     # consolidation leads to judge
 sb related <page> [-k N] [--json]   # links in and out, shared sources, similar words and meaning, unlinked mentions
@@ -72,7 +72,7 @@ sb graph [--orphans incoming|outgoing|both] [--hubs N] [--dead] [--json]   # rol
 sb mv <page> <new name or path> [--dry-run] | sb mv --undo   # rename or move; links follow; journalled
 sb new <type> "<title>"    # a page of a type with its sections; gaps are marked [PENDING VALIDATION]
 sb pack <name>             # add a starter pack: research, engineering, entities
-sb log <op> "<title>"      # record a query, analysis, wrapup, triage, consolidate, decision, postmortem or dossier
+sb log <op> "<title>"      # record a query, analysis, research, wrapup, triage, consolidate, decision, postmortem or dossier
 sb memory brief            # working memory, open decisions, inbox, health
 sb eval [--record] [--baseline]   # retrieval quality on eval/queries.yaml; compare with the last run
 sb index rebuild           # regenerate index.md and the search index

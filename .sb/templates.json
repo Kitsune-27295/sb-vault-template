@@ -4,17 +4,18 @@
     ".claude/skills/consolidate/SKILL.md": "c9a704a14200ebc9baa15a44d102ad76e983d2ec0fad9a6ef051a0db422b8af5",
     ".claude/skills/decide/SKILL.md": "1fd16390f403a7210d53823bf29da312694b5733ffcf0f94842791be59c96e28",
     ".claude/skills/dossier/SKILL.md": "fe4656c6a03a4cd0ae3c2be1782740beadfb2953d2f2def1055d94cbdee6d55b",
-    ".claude/skills/ingest/SKILL.md": "fc01b3adb2c664972e56518f6f6b9ee99a4ac82e8d59f5c643ff5cddc29279b3",
+    ".claude/skills/ingest/SKILL.md": "0d388018f480650661ffc8245f64f770512bdd9dc4d8d3a9b633f7988c58801b",
     ".claude/skills/onboarding/SKILL.md": "9d1e54e74857964483f0c525e08a9cebf0aae4fb5eb15849631ff4bf8d9fded3",
     ".claude/skills/postmortem/SKILL.md": "b34febddf058e4a782a366a95cb10350c2f0013913ce49d8b0b42f40eab505a3",
-    ".claude/skills/query/SKILL.md": "5fb1724d38fbe1761b574c988b4f5ab8f96a8159192e49193ef570b16b41a62b",
+    ".claude/skills/query/SKILL.md": "af488ba127b4a0d2e2b607ecbae3a347193f278f6c01220f7e5e251f63602ddd",
+    ".claude/skills/research/SKILL.md": "d2c2ef775a1e409d7c8adc13d35e855606241f9d7220b778ab41424190cf4225",
     ".claude/skills/triage/SKILL.md": "d50badf18f7b9e6dbafb63893120e79476615ad454f9a317d2e532d240580d1d",
     ".claude/skills/wrapup/SKILL.md": "b43d120d261a3e1bd2f40dd229286548b79638b6e419082a57e0b194bf0b3263",
     ".gitattributes": "f935641dc23c309116b9f19c8a851a6a31b912626eca7f9cc8ed0a2474f9a039",
     ".github/workflows/sb-update.yml": "bda62f743bbcb08a4775fc0c0214e6ebcbc53f690b329a779a284d1a7e8c525a",
-    "AGENTS.md": "9097f42f9a319569cf021fb459eda539f6564998379ac95bdc6bc351617cbb54",
+    "AGENTS.md": "160a106d76b29746580db59c6eb723b0a5d573b11e70835c3c080d4ad822db77",
     "CLAUDE.md": "cbbeb8bc0f6c5f3b34b9f824d589e73db03c3ab73bae4ce5617181382653386c",
     "setup-sb.py": "eb4c96be7a71e3b8842c0129005764686bed33411c414b38e19dfc0b88f9783d"
   },
-  "sb": "0.9.1"
+  "sb": "0.10.0"
 }

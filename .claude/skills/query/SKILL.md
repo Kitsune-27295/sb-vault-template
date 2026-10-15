@@ -27,5 +27,10 @@ description: Use when the curator asks what the knowledge base says, knows or co
    - frontmatter: `type: analysis`, a one-line `description`, and `sources:` set to the union of the sources behind the pages you cited;
    - links to every page it draws on.
 
+   Start from `sb new analysis "<title>"` so the sections exist. Then:
+   - **Request and scope.** Under `## Question`, write the request in the curator's words, the scope you searched (`--path`, `--type`) and today's date, so the query can be repeated and what changed can be seen.
+   - **Formats over a scope.** For a FAQ, a briefing, a study guide, a timeline or a table, name the scope first: one project's folder with `--path wiki/<folder>/`, or several `--path` for a set the curator picks. File it as the same `type: analysis`. A table gets a **Source column**, and every row names its page as `[[Page]]` with its `path:line`. A timeline orders events by the date the source gives, never by the capture date.
+   - **`## Method`.** A figure you computed (a sum, a rate, a count across pages) goes in with the script you ran and the pages or files it read, never a number worked out by hand. A data file outside the vault is cited by its path and sha256.
+
    Link the new page from the concept page it answers, so it is not an orphan. Run `sb lint` and fix any error it reports. Record it with `sb log analysis "<page name>"`.
 6. **Log the question** with `sb log query "<the question, one line>"`, so the log shows what the vault is used for.
