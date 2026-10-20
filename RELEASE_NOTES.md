@@ -1,2 +1,5 @@
+### Fixed
+- `sb memory brief`: strictly cap session briefing at 9,000 characters before truncating, preventing Claude Code and Antigravity hook context overflow errors on large vaults.
+
 ### Added
-- `sb clip` of an X or Twitter post with a video captures the post's text and a `## Video` section with the video's metadata, description and transcript when it has captions; a failing video leaves the post captured and says why.
+- Explicit contract verification and invariant coverage tests across all 10 canonical skills (`consolidate`, `decide`, `dossier`, `ingest`, `onboarding`, `postmortem`, `query`, `research`, `triage`, `wrapup`) in `tests/skills/test_skill_templates.py`.
