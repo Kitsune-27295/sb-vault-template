@@ -1,0 +1,51 @@
+version: "1.0"
+framework: "sb-wiki"
+name: "Personal Knowledge Wiki Vault Map"
+description: "Hierarchical retrieval map for personal knowledge bases and operational wikis."
+default_zone: "notes"
+zones:
+  compiled:
+    paths:
+      - "wiki/**"
+    priority_weight: 2.0
+    chunk_strategy: "header_hierarchical"
+    chunk_size: 1500
+    chunk_overlap: 200
+    extract_frontmatter:
+      - "title"
+      - "description"
+      - "tags"
+      - "aliases"
+  context:
+    paths:
+      - "context/**"
+    priority_weight: 1.2
+    chunk_strategy: "header_hierarchical"
+    chunk_size: 1500
+    chunk_overlap: 200
+    extract_frontmatter:
+      - "title"
+      - "description"
+  notes:
+    paths:
+      - "notes/**"
+    priority_weight: 1.0
+    chunk_strategy: "header_hierarchical"
+    chunk_size: 1200
+    chunk_overlap: 150
+  memory:
+    paths:
+      - "memory/**"
+      - "hot.md"
+      - "lessons.md"
+    priority_weight: 0.8
+    chunk_strategy: "paragraph"
+    chunk_size: 1000
+    chunk_overlap: 100
+  sources:
+    paths:
+      - "sources/**"
+    priority_weight: 0.6
+    chunk_strategy: "fixed_sliding"
+    chunk_size: 1500
+    chunk_overlap: 250
