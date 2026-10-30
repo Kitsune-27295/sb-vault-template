@@ -11,7 +11,7 @@ A search result is a lead, not knowledge. Nothing found here reaches the wiki un
 
 1. **Scope.** Restate the request in one line. Ask at most 3 questions, and only those that would change the search (audience, period, language). Then look at the vault first:
    - run `sb search "<topic>" --json -k 8` with 2 or 3 phrasings, adding `--path wiki/<folder>/` when the topic lives in one project;
-   - run `sb ingest pending`;
+   - run `sb candidates` and `sb ingest pending`;
    - note the open questions the pages leave (`## Questions this source raises`).
 
    Say in one sentence what the vault does not cover: that gap is the reason for the search.
@@ -22,7 +22,7 @@ A search result is a lead, not knowledge. Nothing found here reaches the wiki un
    Wait for the curator's answer. Do not search before it.
 3. **Search** with the web search or fetch tool this environment has. When it has none, say so and ask for links; do not answer from memory. Open a page before you list it: a snippet is not the page.
 4. **Show the candidates as a table:** link, title, domain, kind (primary, official, secondary, community), date, why it fits, and whether the vault already has it (`sb clip` skips a known link and says `exists`). Put primary and official sources first and mark opinion and marketing. Never list more than the cap; list a source that only repeats another once, with the original.
-5. **Wait for the curator's choice.** Run `sb clip "<link>"` for each approved link. Report each `captured <id>`, each `exists <id>` and each failure; a failure is reported, not retried.
+5. **Wait for the curator's choice.** Write the approved links, one per line, to a temporary file and run `sb clip --from <file>`. Report each `captured <id>`, each `exists <id>` and each failure; a failure is reported, not retried.
 6. **Close.** Run `sb log research "<topic>; <n> queries; <approved>/<listed> approved"`. Offer `ingest` for the captured ids, one source at a time, and do not ingest on your own.
 
 Never put a result's text into the vault by hand: a capture goes through `sb clip`, so it is frozen with a hash. Say what was not covered (languages, paywalled pages). A second round of search needs a new plan the curator approves.

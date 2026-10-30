@@ -9,69 +9,20 @@
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
-      "Edit(./sources/**)",
-      "Edit(./log/**)",
+      "Edit(./sources/*.md)",
+      "Edit(./sources/*.meta.json)",
+      "Edit(./sources/inbox/**)",
       "Edit(./index.md)",
-      "Edit(./.env*)",
-      "Edit(./**/.env*)",
+      "Edit(./log/**)",
       "Edit(./.sb/**)",
       "Edit(./.githooks/**)",
       "Edit(./.claude/settings.json)",
-      "Edit(./.claude/settings.local.json)",
-      "Edit(./.agents/hooks.json)"
+      "Edit(./.claude/settings.local.json)"
     ],
     "ask": [
       "Edit(./CONVENTIONS.md)",
-      "Bash(sb clip:*)",
-      "Bash(sb mv:*)"
-    ]
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash|PowerShell",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sb hook run pre-write --vault \"$CLAUDE_PROJECT_DIR\" || exit 2",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sb hook run session-start --vault \"$CLAUDE_PROJECT_DIR\"",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sb hook run stop --vault \"$CLAUDE_PROJECT_DIR\"",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sb hook run post-edit --vault \"$CLAUDE_PROJECT_DIR\"",
-            "timeout": 30
-          }
-        ]
-      }
+      "Bash(sb clip *--allow-local*)",
+      "Bash(sb uninstall *--apply*)"
     ]
   }
 }

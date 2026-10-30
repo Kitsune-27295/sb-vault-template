@@ -3,7 +3,7 @@ name: sb-update
 # Keeps this vault's skills and rules current. It opens a pull request; nothing changes until you
 # merge it. Your notes, sources, memory and log are never touched, and a file you edited is kept.
 # The logic lives in the public template repository, so this small file never needs to change.
-# (Delete it if you do not want automatic update pull requests.)
+# (Managed by `sb upgrade`. Delete it if you do not want automatic update pull requests.)
 
 on:
   schedule:
