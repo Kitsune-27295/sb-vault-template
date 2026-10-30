@@ -9,7 +9,7 @@ description: Use when the curator makes or revisits a choice that will be argued
 
 Facts come from what was said or written, never from what would sound reasonable.
 
-1. **Check it is new.** Run `sb search "<the choice>" --type decision` and `sb candidates`. A decision on the same question already exists? Then this one supersedes it (step 5): do not write a second, parallel record.
+1. **Check it is new.** Run `sb search "<the choice>" --type decision`. A decision on the same question already exists? Then this one supersedes it (step 5): do not write a second, parallel record.
 2. **Create the page.** Run `sb new decision "<the choice, as a short title>"`. It lands in `memory/decisions/` with `status: proposed`.
 3. **Fill it from the conversation.**
    - *Context*: what forced a choice and what was known.

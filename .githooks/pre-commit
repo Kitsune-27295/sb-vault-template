@@ -1,0 +1,13 @@
+#!/bin/sh
+# Managed by `sb hook install`; regenerate it instead of editing.
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+if command -v sb >/dev/null 2>&1; then
+  exec sb hook run git-pre-commit --vault "$ROOT"
+fi
+for PY in "$ROOT/.venv/Scripts/python" "$ROOT/.venv/bin/python" python3 python; do
+  if command -v "$PY" >/dev/null 2>&1 && "$PY" -c "import sb_wiki" >/dev/null 2>&1; then
+    exec "$PY" -m sb_wiki.cli hook run git-pre-commit --vault "$ROOT"
+  fi
+done
+echo "sb: CLI not found; git-pre-commit hook skipped (install it, then run sb doctor)" >&2
+exit 0

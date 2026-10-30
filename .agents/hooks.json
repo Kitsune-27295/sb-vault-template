@@ -1,0 +1,31 @@
+{
+  "sb-harness": {
+    "enabled": true,
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sb hook run pre-write --agent antigravity --vault ..",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "sb hook run session-start --agent antigravity --vault ..",
+        "timeout": 30
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "sb hook run stop --agent antigravity --vault ..",
+        "timeout": 30
+      }
+    ]
+  }
+}

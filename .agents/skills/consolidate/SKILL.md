@@ -10,7 +10,7 @@ description: Use when the curator asks to clean up, consolidate, review or audit
 `sb` finds the **leads**; you judge them; the curator approves. Nothing is deleted, ever.
 
 1. **Gather the leads.**
-   - `sb candidates --json` lists pairs that may duplicate each other, links to superseded pages, and declared contradictions.
+   - Find the leads yourself: `sb search` for the shared terms, `sb graph` for orphans and dead links, and the `contradicts:` and `superseded_by:` frontmatter of the pages involved.
    - `sb lint --json` lists orphans, stale index entries, pending validations and size budgets.
 2. **Judge each lead.** Read both pages, and their cited sources when facts disagree. Decide which of these it is:
    - a **real duplicate**: same subject and same thesis;
@@ -29,9 +29,9 @@ description: Use when the curator asks to clean up, consolidate, review or audit
    - **Stale claim.** Update the claim, citing the newer source, and keep a one-line note of what it used to say and which source replaced it. Give both dates: the source's, or "undated", and today's (the consolidation). If the newer source does not state the old value itself, mark the link as inferred ("inferred: B does not state the old value"). A duplicate that is also stale gets both treatments.
    - **Contradiction.** Keep both attributed views. Remove `contradicts:` only once the pages have been reconciled.
    - **Orphan.** Link the page from the most relevant concept page, or propose superseding it.
-5. **Check.** Run `sb lint` until it reports no errors. `index.md` is regenerated when you edit wiki pages; if lint still reports `IDX001`, run `sb index rebuild`.
+5. **Check.** Run `sb lint` until it reports no errors. `index.md` is regenerated when you edit wiki pages; if lint still reports `IDX001`, run `sb ingest pending` and fix what it names.
 6. **Log.** Run `sb log consolidate "<one-line summary>"`. Summarise what changed in 5 lines at most.
 
-A pair judged **complementary** should link both ways. `sb candidates` then stops proposing it, so no separate dismissal list is needed.
+A pair judged **complementary** should link both ways, so the next pass does not propose it again.
 
 Also look for what no check can see: a claim wider than its source, a concept that several pages mention but none owns, and a quote cut in a way that changes its meaning. Report these as proposals.
