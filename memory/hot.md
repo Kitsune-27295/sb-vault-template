@@ -1,6 +1,6 @@
 # In flight
 
-Working memory. Loaded every session; keep it to 60 lines at most.
+Working memory, loaded every session. Keep it under 60 lines.
 
 ## Priorities
 
