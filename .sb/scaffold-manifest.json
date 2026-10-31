@@ -14,7 +14,7 @@
     ".agents/skills/research/SKILL.md": "412582dc7866a04149ff7d15cd94bbbfbb2965b8c73c732fd463a1ab436b32a5",
     ".agents/skills/triage/SKILL.md": "d50badf18f7b9e6dbafb63893120e79476615ad454f9a317d2e532d240580d1d",
     ".agents/skills/wrapup/SKILL.md": "b43d120d261a3e1bd2f40dd229286548b79638b6e419082a57e0b194bf0b3263",
-    ".claude/settings.json": "81b0f30225718eb508be35f826422d1480ca60aa815ef965ca8c1fde7957f456",
+    ".claude/settings.json": "115cc876e79d551c6e36280f080d89407d3249b47fc09390250e96fc97d15ce9",
     ".claude/skills/consolidate/SKILL.md": "aaaaddbc269278e66d16075edd9ada5e2194a1eb1c482316d731decaf41a140d",
     ".claude/skills/decide/SKILL.md": "da38799ae5e1c61741c9bc0e9e69fde6c82d9d9ca91d0af5ceed6beae4bafb44",
     ".claude/skills/dossier/SKILL.md": "5bb894ad621788ff972635208d5a3cef8a771f1d518707eb6a24c8cd10146499",

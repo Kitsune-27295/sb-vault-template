@@ -23,7 +23,8 @@
     "ask": [
       "Edit(./CONVENTIONS.md)",
       "Bash(sb clip:*)",
-      "Bash(sb mv:*)"
+      "Bash(sb mv:*)",
+      "Bash(sb uninstall *--apply*)"
     ]
   },
   "hooks": {
