@@ -201,13 +201,15 @@ export function searchDocuments(db, query, options = {}) {
  */
 export function syncVault(vaultDir, db, profile = activeProfile) {
   const ignoreDirs = new Set(['.git', '.scratch', 'node_modules', '.gemini', '.obsidian', '.vscode', '.claude', '.agents']);
+  // Code and template skeletons live in the root tools/ folder; a folder named tools deeper in the vault is content.
+  const isIgnored = (name, dir) => ignoreDirs.has(name) || name.startsWith('.') || (name === 'tools' && dir === vaultDir);
   const filesToIndex = [];
 
   function walk(currentDir) {
     const entries = fs.readdirSync(currentDir, { withFileTypes: true });
     for (const entry of entries) {
       if (entry.isDirectory()) {
-        if (!ignoreDirs.has(entry.name) && !entry.name.startsWith('.')) {
+        if (!isIgnored(entry.name, currentDir)) {
           walk(path.join(currentDir, entry.name));
         }
       } else if (entry.isFile() && entry.name.endsWith('.md')) {
@@ -229,9 +231,17 @@ export function syncVault(vaultDir, db, profile = activeProfile) {
 
     for (const absPath of filesToIndex) {
       const relPath = path.relative(vaultDir, absPath).replace(/\\/g, '/');
-      visitedPaths.add(relPath);
 
-      const stat = fs.statSync(absPath);
+      let stat;
+      try {
+        stat = fs.statSync(absPath);
+      } catch (err) {
+        // The file vanished between the directory walk and the read (for example a
+        // concurrent test fixture being removed): skip it instead of failing the sync.
+        if (err.code === 'ENOENT') continue;
+        throw err;
+      }
+      visitedPaths.add(relPath);
       const existing = getStmt.get(relPath);
 
       if (existing && existing.mtime >= stat.mtimeMs) {
