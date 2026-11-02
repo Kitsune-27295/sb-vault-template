@@ -2,6 +2,23 @@
 import { fileURLToPath } from 'node:url';
 import activeProfile from './profiles/active.js';
 
+// The lowest version of the lowest supported line; package.json `engines` and the docs say the same.
+export const NODE_MINIMUM = '22.13';
+
+// `node:sqlite` needs `--experimental-sqlite` before these minors of each line
+// (nodejs.org/api/sqlite.html: "v23.4.0, v22.13.0: no longer behind --experimental-sqlite").
+const UNFLAGGED_FROM_MINOR = { 22: 13, 23: 4 };
+
+/**
+ * @param {string} version A Node version such as `process.versions.node`.
+ * @returns {boolean} True when `node:sqlite` works without a flag. Any later major qualifies.
+ */
+export function meetsNodeMinimum(version) {
+  const [major, minor] = version.split('.').map(Number);
+  if (major in UNFLAGGED_FROM_MINOR) return minor >= UNFLAGGED_FROM_MINOR[major];
+  return major > 23;
+}
+
 export async function runDoctorChecks(projectRoot = process.cwd(), profile = activeProfile) {
   const results = {
     passed: true,
@@ -14,8 +31,7 @@ export async function runDoctorChecks(projectRoot = process.cwd(), profile = act
   }
 
   // 1. Runtime & SQLite
-  const nodeMajor = parseInt(process.versions.node.split('.')[0], 10);
-  record('Runtime', 'Node.js Version (>= 22)', nodeMajor >= 22, `Current: v${process.versions.node}`);
+  record('Runtime', `Node.js Version (>= ${NODE_MINIMUM})`, meetsNodeMinimum(process.versions.node), `Current: v${process.versions.node}`);
 
   try {
     const { DatabaseSync } = await import('node:sqlite');

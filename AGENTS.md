@@ -28,7 +28,7 @@ Save the text as a new file in `sources/inbox/`. Put the origin (URL or title, a
 
 ## Tools
 
-If the vault carries the Node tools (`tools/` and `package.json`; the template repository does, a plain `sb init` does not; run `npm ci` once, Node 22.5 or later):
+The vault carries Node tools (run `npm ci` once; Node 22.13 or later):
 
 - `npm run clip -- <url>` saves a web page into `sources/inbox/` as a frozen `.md` plus a `.json` provenance sidecar. It never overwrites a capture.
 - `npm run rag:sync`, then `npm run rag:search -- "<query>"` or `npm run rag:context -- "<query>"`: search the vault. Wiki pages rank above sources.
