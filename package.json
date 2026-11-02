@@ -1,0 +1,26 @@
+{
+  "name": "sb-engines",
+  "version": "1.0.0",
+  "description": "Clip, search and context tools of the sb framework",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run --no-file-parallelism",
+    "doctor": "node tools/doctor.js",
+    "clip": "node tools/clipper/clipper.js",
+    "pipeline": "node tools/pipeline.js",
+    "rag:sync": "node tools/rag/cli.js sync",
+    "rag:search": "node tools/rag/cli.js search",
+    "rag:context": "node tools/rag/cli.js context"
+  },
+  "dependencies": {
+    "js-yaml": "5.5.0",
+    "linkedom": "0.18.14",
+    "turndown": "7.2.4"
+  },
+  "devDependencies": {
+    "vitest": "5.0.5"
+  },
+  "engines": {
+    "node": ">=22.5"
+  }
+}
