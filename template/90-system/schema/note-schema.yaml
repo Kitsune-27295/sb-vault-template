@@ -1,0 +1,94 @@
+# The single definition of note frontmatter for this Instance (ADR 0002, planning 04 section 2.2).
+#
+# Two readers use this file and nothing else:
+#   - `sbk doctor` (check `frontmatter-schema`) validates every note against it.
+#   - `sbk templates` renders one note template per type from it,
+#     into 90-system/templates/. The doctor reports a template that differs from what
+#     this file generates, so schema and templates cannot drift.
+# Do not repeat these field lists in other documents; cite this file.
+#
+# Rules the validator applies:
+#   - every field in `common_required` is required for every type;
+#   - `types.<name>.required` adds the fields that type must also carry;
+#   - every other field in `fields` is optional and validated only when present;
+#   - a key with an empty value counts as absent;
+#   - keys that are not listed in `fields` (for example `tags`, `aliases`) are allowed and not checked.
+#
+# Field kinds: note-type (one of the keys of `types`), string, date (YYYY-MM-DD),
+# enum (`values`), string-list (`min_items`, default 0).
+# `template` is the value a generated template puts in the field; it is required for
+# every field that some type requires. `{{title}}` and `{{date}}` are filled in by
+# Obsidian's core Templates plugin when a note is created from the template.
+
+schema_version: 1
+
+common_required: [type, title, created, updated, status]
+
+types:
+  source:
+    summary: Reference note describing one raw source
+    required: []
+  concept:
+    summary: Compiled explanation of an idea
+    required: [sources]
+  entity:
+    summary: Compiled description of a person, tool, organization or other named thing
+    required: [sources]
+  procedure:
+    summary: Compiled how-to that must be revisited on a schedule
+    required: [sources, review_by]
+  decision:
+    summary: Record of a decision and its reasons
+    required: []
+  lesson:
+    summary: Record of something learned, so the reason behind a change survives
+    required: []
+  moc:
+    summary: Map of content that links related notes
+    required: []
+  proposal:
+    summary: Agent-written content awaiting the curator's approval
+    required: []
+  log:
+    summary: Append-only record of ingest, query and maintenance actions
+    required: []
+
+fields:
+  type:
+    kind: note-type
+  title:
+    kind: string
+    template: "{{title}}"
+  created:
+    kind: date
+    template: "{{date}}"
+  updated:
+    kind: date
+    template: "{{date}}"
+  status:
+    kind: enum
+    values: [draft, active, superseded, archived]
+    template: draft
+  sources:
+    kind: string-list
+    min_items: 1
+    template: ["[[source-id]]"]
+  review_by:
+    kind: date
+    template: "{{date}}"
+  # Optional one-line summary of the note. `sbk index` shows it after the title in the zone index.
+  description:
+    kind: string
+  confidence:
+    kind: enum
+    values: [high, medium, low]
+  supersedes:
+    kind: string
+  superseded_by:
+    kind: string
+  contradicts:
+    kind: string-list
+  # Optional, meaningful for notes of type `source` that cite a raw source: inclusive line ranges
+  # of that raw source the note covers, for example ["1-120", "121-300"]. Checked by `ingest-coverage`.
+  covers:
+    kind: string-list

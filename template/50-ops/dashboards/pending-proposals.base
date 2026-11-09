@@ -1,0 +1,12 @@
+filters:
+  and:
+    - file.inFolder("30-proposals")
+    - 'type == "proposal"'
+    - 'status == "draft"'
+views:
+  - type: table
+    name: "Pending proposals"
+    order:
+      - file.name
+      - note.created
+      - note.updated

@@ -1,0 +1,13 @@
+filters:
+  and:
+    - file.inFolder("40-compiled")
+    - 'type == "procedure"'
+    - 'status == "active"'
+    - "review_by < today()"
+views:
+  - type: table
+    name: "Overdue procedures"
+    order:
+      - file.name
+      - note.review_by
+      - note.updated

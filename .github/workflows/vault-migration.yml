@@ -1,0 +1,295 @@
+# Reusable workflow: migrate a vault repository to the Second Brain framework (ADR 0011, ADR 0012).
+#
+# A vault repository calls this workflow. It checks out the vault (the default branch) and the framework
+# at a ref the caller pins, runs `sbk import` on the vault into a scratch folder, and, in apply mode,
+# replaces the vault tree on the fixed branch `sbk/migration` and opens or refreshes ONE pull request
+# with the verification report and the migration manifest. Nothing changes on the default branch until
+# a person merges that pull request. The source vault is only read.
+#
+# Dry run (the default) prints the plan and opens nothing. Apply mode runs when `dry-run` is false.
+#
+# PRECONDITION (the curator's decision, not made here): the framework repository
+# (`Kitsune-27295/Second_brain`) is PRIVATE today, so a vault repository can fetch it only with a token
+# that can read it, passed as the optional secret `framework-token`. Making the framework repository
+# public, and choosing a license, is a precondition for the general flow: without a token and with a
+# public framework repository the workflow needs no secret at all. Never put the token in a plain
+# variable; use a repository or organization secret scoped to read the one framework repository.
+#
+# Caller example (pin `uses:` to a full commit SHA of the published repository, and `framework-ref` to
+# a tag or a full commit SHA of the framework; a moving branch is not a pin):
+#
+#   jobs:
+#     migrate:
+#       permissions:
+#         contents: write        # the pull-request job pushes the branch `sbk/migration`
+#         pull-requests: write   # and opens or edits the pull request
+#       uses: <owner>/<published-repository>/.github/workflows/vault-migration.yml@<full commit SHA>
+#       with:
+#         framework-ref: <tag or full commit SHA>
+#         dry-run: true          # false to open the pull request
+#       secrets:
+#         framework-token: ${{ secrets.FRAMEWORK_TOKEN }}   # only while the framework repository is private
+#
+# The vault repository must allow GitHub Actions to create pull requests (Settings, Actions, General).
+#
+# Apply mode, in detail:
+# - The branch `sbk/migration` is rebuilt from the default branch on every run and replaced with
+#   `--force-with-lease` against the tip the job read, so edits made by hand on that branch are lost,
+#   but a push that lands between the read and the replacement makes the run fail instead of being
+#   overwritten; the pull request is refreshed, never duplicated.
+# - The default branch is asked of the API inside the job, because the event does not carry it when
+#   the caller runs on a schedule.
+# - Every old tracked path is removed and the new Instance is added. The engine keeps the old files it
+#   does not map under `20-human/_imported/<adapter>/`, so nothing is dropped silently.
+# - `.github/workflows/` of the vault is left exactly as it is: the default token cannot change workflow
+#   files, and the caller of this workflow lives there. Retire old workflows by hand after the merge.
+# - If the Instance equals the current tree, no branch and no pull request are created.
+# - The pull request body carries the verification report and `50-ops/migration/manifest.json` (the
+#   manifest only while the body stays under GitHub's size limit; the file is in the branch either way).
+#
+# What was not exercised: GitHub does not run this file locally. The framework commands it runs were
+# rehearsed on a scratch vault; the workflow itself is verified by its first real run.
+
+name: vault-migration
+
+on:
+  workflow_call:
+    inputs:
+      framework-repository:
+        description: Repository that holds the framework (owner/name).
+        type: string
+        default: Kitsune-27295/Second_brain
+      framework-ref:
+        description: Tag or full commit SHA of the framework to install, pinned by the caller.
+        type: string
+        required: true
+      adapter:
+        description: Import adapter name, or auto to detect it.
+        type: string
+        default: auto
+      dry-run:
+        description: Print the plan and open nothing.
+        type: boolean
+        default: true
+    secrets:
+      framework-token:
+        description: Token that can read the framework repository; needed only while it is private.
+        required: false
+
+# Read-only by default; only the pull-request job widens this.
+permissions:
+  contents: read
+
+# One migration per vault repository at a time; a started run is never cancelled half way.
+concurrency:
+  group: vault-migration-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: plan and build the Instance
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      base: ${{ steps.base.outputs.name }}
+    env:
+      FRAMEWORK_REPOSITORY: ${{ inputs.framework-repository }}
+      FRAMEWORK_REF: ${{ inputs.framework-ref }}
+      ADAPTER: ${{ inputs.adapter }}
+      DRY_RUN: ${{ inputs.dry-run }}
+    steps:
+      # `github.event.repository.default_branch` is empty when the caller runs on a schedule, so the
+      # default branch is asked of the API here, and every later step takes it from this output.
+      - name: Find the default branch of the vault repository
+        id: base
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          branch="$(gh api "repos/$GH_REPO" --jq .default_branch)"
+          [[ "$branch" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || { echo "::error::cannot read the default branch of $GH_REPO"; exit 1; }
+          echo "name=$branch" >> "$GITHUB_OUTPUT"
+
+      - name: Validate the inputs
+        run: |
+          set -euo pipefail
+          [[ "$FRAMEWORK_REPOSITORY" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || { echo "::error::framework-repository must look like owner/name"; exit 1; }
+          [[ "$FRAMEWORK_REF" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || { echo "::error::framework-ref must be a tag or a full commit SHA"; exit 1; }
+          [[ "$ADAPTER" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "::error::adapter must be auto or an adapter name"; exit 1; }
+          [[ "$DRY_RUN" == "true" || "$DRY_RUN" == "false" ]] || { echo "::error::dry-run must be true or false"; exit 1; }
+          if [[ ! "$FRAMEWORK_REF" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::notice::framework-ref is not a full commit SHA; a tag can be moved, pin a SHA for a stronger guarantee"
+          fi
+
+      - name: Check out the vault (read-only, no stored credentials)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.base.outputs.name }}
+          path: vault
+          persist-credentials: false
+
+      - name: Check out the framework at the pinned ref (no stored credentials)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.framework-repository }}
+          ref: ${{ inputs.framework-ref }}
+          token: ${{ secrets.framework-token || github.token }}
+          path: framework
+          persist-credentials: false
+
+      - name: Set up Node 22
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install the framework (the only network use; lifecycle scripts are off)
+        working-directory: framework
+        run: npm ci --ignore-scripts
+
+      - name: Plan the import (writes nothing)
+        run: |
+          set -euo pipefail
+          node framework/bin/sbk.js import vault "$RUNNER_TEMP/instance" --from "$ADAPTER" | tee "$RUNNER_TEMP/plan.txt"
+          {
+            echo '### Migration plan (dry run, nothing written)'
+            echo '```text'
+            cat "$RUNNER_TEMP/plan.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Import into the scratch Instance
+        if: ${{ !inputs.dry-run }}
+        run: |
+          set -uo pipefail
+          mkdir -p "$RUNNER_TEMP/out"
+          node framework/bin/sbk.js import vault "$RUNNER_TEMP/instance" --from "$ADAPTER" --apply
+          code=$?
+          # 1 means a check lists findings: it still goes to review, as long as the Instance exists. The
+          # import builds beside the target and renames it into place only after its own verification,
+          # so a failed verification leaves no Instance. 2 is a refusal.
+          if [ "$code" -ge 2 ]; then echo "::error::import refused (exit $code)"; exit "$code"; fi
+          [ -d "$RUNNER_TEMP/instance" ] || { echo "::error::the import failed its verification and created no Instance (exit $code); see the log above"; exit 1; }
+          echo "$code" > "$RUNNER_TEMP/out/import-exit"
+
+      - name: Verify the Instance against the source
+        if: ${{ !inputs.dry-run }}
+        run: |
+          set -uo pipefail
+          node framework/bin/sbk.js import vault "$RUNNER_TEMP/instance" --verify > "$RUNNER_TEMP/out/verification.txt"
+          code=$?
+          cat "$RUNNER_TEMP/out/verification.txt"
+          if [ "$code" -ge 2 ]; then echo "::error::verification refused (exit $code)"; exit "$code"; fi
+          echo "$code" > "$RUNNER_TEMP/out/verify-exit"
+
+      - name: Write the pull request body
+        if: ${{ !inputs.dry-run }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/out"
+          manifest="$RUNNER_TEMP/instance/50-ops/migration/manifest.json"
+          import_exit="$(cat "$out/import-exit")"
+          verify_exit="$(cat "$out/verify-exit")"
+          {
+            echo "This pull request replaces the tree of this vault with a new Instance of the Second Brain framework, made by \`sbk import\` (adapter: \`$ADAPTER\`) from framework \`$FRAMEWORK_REPOSITORY\` at \`$FRAMEWORK_REF\`. Nothing changes on the default branch until it is merged. The old files that were not mapped are kept under \`20-human/_imported/\`."
+            echo
+            if [ "$import_exit" != "0" ] || [ "$verify_exit" != "0" ]; then
+              echo "**Attention:** the import (exit $import_exit) or the verification (exit $verify_exit) reported findings. Read the report below before merging."
+              echo
+            fi
+            echo "## Verification report"
+            echo
+            echo '```text'
+            cat "$out/verification.txt"
+            echo '```'
+            echo
+            echo "## Migration manifest"
+            echo
+            if [ "$(wc -c < "$manifest")" -le 40000 ]; then
+              echo '<details><summary>50-ops/migration/manifest.json</summary>'
+              echo
+              echo '```json'
+              cat "$manifest"
+              echo '```'
+              echo
+              echo '</details>'
+            else
+              echo "The manifest is too large for this description; it is in the branch at \`50-ops/migration/manifest.json\`."
+            fi
+          } > "$out/body.md"
+          tar -czf "$out/instance.tar.gz" -C "$RUNNER_TEMP/instance" .
+
+      - name: Hand the Instance and the body to the pull-request job
+        if: ${{ !inputs.dry-run }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: vault-migration
+          path: |
+            ${{ runner.temp }}/out/instance.tar.gz
+            ${{ runner.temp }}/out/body.md
+          if-no-files-found: error
+          retention-days: 1
+
+  pull-request:
+    name: open or refresh the pull request
+    needs: migrate
+    if: ${{ !inputs.dry-run }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # The only job that can write. It runs no framework code, only git and gh on the Instance built above.
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      BASE: ${{ needs.migrate.outputs.base }}
+      FRAMEWORK_REF: ${{ inputs.framework-ref }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BRANCH: sbk/migration
+    steps:
+      - name: Check out the vault (this job pushes, so it keeps the token)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.migrate.outputs.base }}
+          path: vault
+          persist-credentials: true
+
+      - name: Download the Instance and the body
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: vault-migration
+          path: ${{ runner.temp }}/migration
+
+      - name: Replace the vault tree on the fixed branch
+        working-directory: vault
+        run: |
+          set -euo pipefail
+          git switch -C "$BRANCH"
+          # Remove every tracked path except the vault's own workflows, then add the new Instance.
+          git rm -r -q --ignore-unmatch -- . ':(exclude).github/workflows'
+          tar -xzf "$RUNNER_TEMP/migration/instance.tar.gz" -C . --exclude='./.github/workflows'
+          git add -A
+          if git diff --cached --quiet; then
+            echo "The Instance equals the current tree: no branch and no pull request."
+            echo "NOTHING=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "Migrate the vault to the Second Brain framework" -m "Framework ref: $FRAMEWORK_REF"
+          # Replace the branch only if nobody changed it since it was read: a lease on the tip seen now
+          # (an empty value after the colon means the branch must not exist yet).
+          tip="$(git ls-remote --heads origin "refs/heads/$BRANCH" | cut -f1 | head -n 1)"
+          git push "--force-with-lease=refs/heads/$BRANCH:$tip" origin "HEAD:refs/heads/$BRANCH"
+
+      - name: Open or refresh the single pull request
+        if: ${{ env.NOTHING != 'true' }}
+        run: |
+          set -euo pipefail
+          title="Migrate the vault to the Second Brain framework"
+          existing="$(gh pr list --head "$BRANCH" --base "$BASE" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --title "$title" --body-file "$RUNNER_TEMP/migration/body.md"
+            echo "Refreshed pull request #$existing"
+          else
+            gh pr create --base "$BASE" --head "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/migration/body.md"
+          fi
