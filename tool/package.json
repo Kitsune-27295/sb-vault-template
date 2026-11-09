@@ -1,0 +1,17 @@
+{
+  "name": "second-brain-framework",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Second Brain framework-template: verifiable vault rules, CLI and doctor.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "sbk": "bin/sbk.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "yaml": "^2.9.1"
+  }
+}

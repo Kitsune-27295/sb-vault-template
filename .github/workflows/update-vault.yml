@@ -1,0 +1,269 @@
+# Reusable workflow, published as `.github/workflows/update-vault.yml` of the template repository.
+# A vault's own `sb-update.yml` calls it every week and needs no change (ADR 0013):
+#
+#   uses: Kitsune-27295/sb-vault-template/.github/workflows/update-vault.yml@stable
+#
+# This file keeps the contract of the old `update-vault.yml` (the one that ran `sb upgrade`): the same
+# trigger (`workflow_call`), the same inputs (`template-ref`, default `stable`, and `dry-run`), the same
+# branch `sb/framework-update` and ONE pull request, created or refreshed. What changed is the engine: it
+# runs `sbk migrate-vault` from the `tool/` folder shipped inside the published tree. A vault that still
+# is an old `sb` vault is migrated to this framework's Instance; a vault already on this framework is
+# upgraded; a folder that is neither (migrate.status `not-migratable`) ends the job with a notice and NO
+# pull request. Every other outcome that is not a change fails the job visibly: the job decides from the
+# `migrate.status` of the JSON report, never from the bare exit code.
+#
+# An already-open pull request of the OLD workflow on `sb/framework-update` is not a conflict: the branch
+# is replaced and that same pull request is retitled and re-described into the migration pull request.
+#
+# Nothing changes on the vault's default branch until its owner merges the pull request. Rollback: close
+# the pull request, or revert the merge; the old tree stays in the Git history either way.
+#
+# Idempotent: `--today` is the date of the vault's HEAD commit, so two runs on an unchanged vault build the
+# identical tree; the push is skipped when that tree equals the tree of the branch tip read at the START of
+# the job (which is also the lease of the push).
+#
+# Trust, stated honestly. `manifest.json` proves the INTERNAL CONSISTENCY of the checked-out tree: every
+# `tool/` and `template/` file is the file the manifest lists, none is missing or extra, and no symlink
+# hides anywhere. It does NOT prove who wrote the manifest: it comes from the same checkout, so whoever
+# controls the ref controls the manifest. The trust root is the moving tag `stable` (and the release
+# publication behind it, `move_stable`, which is gated by a confirmation phrase and an environment), not
+# the manifest. The vault is checked out WITHOUT stored credentials; the token reaches only the two steps
+# that run no code from `tool/` (the read of the branch tip, which runs before any tool code, and the final
+# push and pull request step).
+#
+# `vault-migration.yml` (the other file in this folder) is KEPT, not folded in: it is a different
+# contract (a vault repository that pins a framework ref of the private source repository, branch
+# `sbk/migration`, a two-job split), it has its own tests, and a vault that already calls it must keep
+# working. This file is the bridge for vaults that follow the moving tag `stable`.
+#
+# What was not exercised: GitHub does not run this file locally. The engine step was run from a built
+# tree against a synthetic old vault (tests/bridge-workflow.test.js); the workflow itself is verified by
+# its first real run.
+
+name: update-vault
+
+on:
+  workflow_call:
+    inputs:
+      template-ref:
+        description: "Ref of the template repository that supplies the tool and the template"
+        type: string
+        default: stable
+      dry-run:
+        description: "Print the plan and open nothing (this repository's own validation)"
+        type: boolean
+        default: false
+
+# Read-only by default; only the update job widens this.
+permissions:
+  contents: read
+
+# One update per vault repository at a time; a started run is never cancelled half way.
+concurrency:
+  group: update-vault-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Update the vault
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      BRANCH: sb/framework-update
+      DRY_RUN: ${{ inputs.dry-run }}
+      TEMPLATE_REF: ${{ inputs.template-ref }}
+    steps:
+      # The vault sits in `vault/` and the template in `template-src/`, side by side: the engine replaces
+      # everything of the vault's working tree except `.git` and `.github`, so nothing else may be inside it.
+      # No credentials are stored in the checkout; `lfs: true` so files tracked by Git LFS are real files.
+      - name: Check out the vault (no stored credentials)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: vault
+          persist-credentials: false
+          lfs: true
+
+      # The lease of the final push: the tip of the update branch as it is NOW, before any tool code runs.
+      # An empty value means the branch does not exist yet.
+      - name: Read the tip of the update branch (before any tool code runs)
+        id: remote-tip
+        working-directory: vault
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          basic="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          echo "::add-mask::$basic"
+          export GIT_CONFIG_COUNT=1 "GIT_CONFIG_KEY_0=http.${GITHUB_SERVER_URL}/.extraheader" "GIT_CONFIG_VALUE_0=AUTHORIZATION: basic $basic"
+          tip="$(git ls-remote --heads origin "refs/heads/$BRANCH" | cut -f1 | head -n 1)"
+          echo "tip=$tip" >> "$GITHUB_OUTPUT"
+          echo "Update branch tip at the start of the job: ${tip:-none}"
+
+      - name: Check out the template repository at the requested ref (no stored credentials)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Kitsune-27295/sb-vault-template
+          ref: ${{ inputs.template-ref }}
+          path: template-src
+          persist-credentials: false
+
+      # Runs before any code from tool/ executes. The list is derived from manifest.json by a short
+      # `node -e` (the runner's own Node, not tool/), and sha256sum does the comparison. This proves the
+      # tree is consistent with its manifest; it does not prove who wrote the manifest (see the header).
+      - name: Verify tool/ and template/ against the tree manifest
+        working-directory: template-src
+        run: |
+          set -euo pipefail
+          [ -f manifest.json ] || { echo "::error::manifest.json is missing from the template checkout: refusing to run tool/"; exit 1; }
+          # A symlink could point outside the verified tree and be followed by the tool.
+          links="$(find tool template -type l)"
+          if [ -n "$links" ]; then echo "::error::a symlink exists under tool/ or template/: refusing to run tool/"; echo "$links"; exit 1; fi
+          node -e '
+            const m = JSON.parse(require("fs").readFileSync("manifest.json", "utf8"));
+            const lines = [];
+            for (const f of m.files) {
+              if (!/^(tool|template)\//.test(f.path)) continue;
+              if (!/^[0-9a-f]{64}$/.test(f.sha256) || /[\r\n]|(^|\/)\.\.(\/|$)/.test(f.path) || f.path.includes(String.fromCharCode(92))) throw new Error("bad manifest entry");
+              lines.push(f.sha256 + "  " + f.path);
+            }
+            if (!lines.some((l) => l.endsWith("  tool/bin/sbk.js"))) throw new Error("the manifest lists no tool");
+            console.log(lines.join("\n"));
+          ' > "$RUNNER_TEMP/manifest.sha256"
+          sha256sum -c --quiet "$RUNNER_TEMP/manifest.sha256"
+          # No extra file either: everything under tool/ and template/ must be in the manifest.
+          find tool template -type f | LC_ALL=C sort > "$RUNNER_TEMP/actual.txt"
+          cut -c 67- "$RUNNER_TEMP/manifest.sha256" | LC_ALL=C sort > "$RUNNER_TEMP/expected.txt"
+          diff "$RUNNER_TEMP/expected.txt" "$RUNNER_TEMP/actual.txt" || { echo "::error::tool/ or template/ differs from the manifest (a file is missing or extra)"; exit 1; }
+
+      - name: Set up Node 22
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install the tool's one runtime dependency (from the lockfile, lifecycle scripts off)
+        working-directory: template-src/tool
+        run: npm ci --omit=dev --ignore-scripts
+
+      # The outcome is the `migrate.status` of the JSON report (never the bare exit code): only
+      # `not-migratable` ends the job without a pull request and without failing; `migrated` and `upgraded`
+      # go on to the pull request; `planned` (a dry run) and `current` change nothing; everything else,
+      # a missing or unreadable report included, fails the job.
+      - name: Migrate the vault
+        id: migrate
+        run: |
+          set -uo pipefail
+          today="$(git -C vault log -1 --format=%cs HEAD)"
+          args=(--report "$RUNNER_TEMP/report" --json --today "$today")
+          if [ "$DRY_RUN" != "true" ]; then args+=(--apply); fi
+          node template-src/tool/bin/sbk.js migrate-vault vault "${args[@]}" > "$RUNNER_TEMP/result.json" 2> "$RUNNER_TEMP/stderr.txt"
+          code=$?
+          cat "$RUNNER_TEMP/stderr.txt" >&2
+          status="$(jq -r '.migrate.status // empty' "$RUNNER_TEMP/result.json" 2> /dev/null || true)"
+          reason="$(jq -r '.migrate.reason // empty' "$RUNNER_TEMP/result.json" 2> /dev/null | head -c 60 || true)"
+          case "$status" in
+            not-migratable)
+              echo "::notice::This repository is not a vault this tool can migrate ($reason): no pull request was opened. $(head -c 300 "$RUNNER_TEMP/stderr.txt" | tr '\n' ' ')"
+              echo "outcome=not-migratable" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+            migrated | upgraded)
+              if [ "$code" -ne 0 ]; then
+                echo "::error::migrate-vault reported $status but exited $code; the working tree was not committed"
+                exit 1
+              fi
+              echo "outcome=changed" >> "$GITHUB_OUTPUT"
+              ;;
+            planned | current)
+              if [ "$code" -ne 0 ]; then
+                echo "::error::migrate-vault reported $status but exited $code"
+                exit 1
+              fi
+              echo "outcome=$status" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::error::migrate-vault did not finish (status '${status:-none}', reason '${reason:-none}', exit $code); the working tree was not committed"
+              head -c 4000 "$RUNNER_TEMP/result.json" >&2
+              exit 1
+              ;;
+          esac
+          if [ -f "$RUNNER_TEMP/report/migration-report.md" ]; then
+            cat "$RUNNER_TEMP/report/migration-report.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # The only step that holds the token besides the read of the branch tip; it runs no code from tool/.
+      - name: Open or refresh the pull request
+        if: ${{ steps.migrate.outputs.outcome == 'changed' && !inputs.dry-run }}
+        working-directory: vault
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          LEASE_TIP: ${{ steps.remote-tip.outputs.tip }}
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Already up to date; no pull request."
+            exit 0
+          fi
+          version="$(jq -r .framework_version ../template-src/manifest.json)"
+          {
+            echo "This pull request moves this vault to the Second Brain framework ($version), with \`sbk migrate-vault\` from the template repository at \`$TEMPLATE_REF\`. Nothing changes on the default branch until you merge it. Your \`.git\` and \`.github\` folders were not touched."
+            echo
+            echo "## Rollback"
+            echo
+            echo "Close this pull request, or, after merging, revert the merge commit. The old tree stays in the Git history either way, and every old file's outcome is in the report below."
+            echo
+            echo "## Report"
+            echo
+            if [ -f "$RUNNER_TEMP/report/migration-report.md" ]; then
+              head -c 50000 "$RUNNER_TEMP/report/migration-report.md"
+              if [ "$(wc -c < "$RUNNER_TEMP/report/migration-report.md")" -gt 50000 ]; then
+                echo
+                echo "(The report is cut here to fit the description; the manifest in the branch lists every file.)"
+              fi
+            else
+              echo "No report file was written."
+            fi
+          } > "$RUNNER_TEMP/body.md"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$BRANCH"
+          git add -A
+          git commit -q -m "Update the vault to the Second Brain framework $version" \
+            -m "Automatic via update-vault (Kitsune-27295/sb-vault-template@${TEMPLATE_REF})."
+
+          basic="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          echo "::add-mask::$basic"
+          export GIT_CONFIG_COUNT=1 "GIT_CONFIG_KEY_0=http.${GITHUB_SERVER_URL}/.extraheader" "GIT_CONFIG_VALUE_0=AUTHORIZATION: basic $basic"
+
+          # Idempotent weekly run: when the tree of the new commit equals the tree of the branch tip read at
+          # the start of the job, there is nothing to push.
+          push=true
+          if [ -n "$LEASE_TIP" ] && git fetch --quiet --no-tags --depth=1 origin "refs/heads/$BRANCH" && [ "$(git rev-parse FETCH_HEAD)" = "$LEASE_TIP" ]; then
+            if [ "$(git rev-parse 'HEAD^{tree}')" = "$(git rev-parse 'FETCH_HEAD^{tree}')" ]; then
+              push=false
+              echo "The branch $BRANCH already holds this exact tree; nothing to push."
+            fi
+          fi
+          # Replace the branch only if nobody changed it since the START of the job (an empty value after
+          # the colon means the branch must not exist yet).
+          if [ "$push" = "true" ]; then
+            git push "--force-with-lease=refs/heads/$BRANCH:$LEASE_TIP" origin "HEAD:refs/heads/$BRANCH"
+          fi
+
+          base="$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)"
+          title="Update the vault to the Second Brain framework $version"
+          existing="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --title "$title" --body-file "$RUNNER_TEMP/body.md"
+            echo "Refreshed pull request #$existing"
+          elif [ "$push" = "false" ]; then
+            echo "No open pull request and nothing new to propose: the owner closed it, so it is not opened again."
+          elif ! gh pr create --base "$base" --head "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/body.md"; then
+            echo "::error::The update is on branch $BRANCH but a pull request could not be opened."
+            echo "::error::Enable Settings > Actions > General > 'Allow GitHub Actions to create and approve pull requests', or open the pull request from that branch by hand."
+            exit 1
+          fi
