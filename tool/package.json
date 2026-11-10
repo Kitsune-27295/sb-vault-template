@@ -1,6 +1,6 @@
 {
   "name": "second-brain-framework",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "description": "Second Brain framework-template: verifiable vault rules, CLI and doctor.",
   "private": true,

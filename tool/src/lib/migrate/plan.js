@@ -10,7 +10,7 @@
  *     destination   path in the Instance, or null for an excluded file
  *     reason        stable code: why excluded, quarantined or kept verbatim; null for mapped
  *     kind          note | raw-source | sidecar | file | log
- *     transforms    what changes the bytes, in the order applied: links, frontmatter, log-chain, log-chain-preamble (empty: verbatim)
+ *     transforms    what changes the bytes, in the order applied: links, frontmatter, log-chain, log-chain-preamble, sidecar-map (empty: verbatim)
  *     type          note: the note type written (kind note only)
  *     sidecar_for   sidecar: source path of its raw source (kind sidecar only)
  *     sidecar_seed  raw-source whose framework recorded no sidecar: the facts the new sidecar starts from

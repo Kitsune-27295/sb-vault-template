@@ -1,13 +1,13 @@
 {
   "manifest_version": 1,
-  "framework_version": "1.0.0",
-  "source_commit": "6450e6a2785f9b17e02dad0f4eff5e949e393d66",
+  "framework_version": "1.0.1",
+  "source_commit": "c5794f28ac76ad5a94a7a3f4cd46bf0f5dc98703",
   "license": {
     "file": "LICENSE",
     "source": "LICENSE",
     "decision_needed": false
   },
-  "tree_hash": "a72a2ff59fe37687d9e4beea65b96ef765364c24878a95f2f5adab3f71eacd42",
+  "tree_hash": "e74e3a54af093a7c89c30db325e8e1177e853d1e4a11db860cf8a01bbe798183",
   "files": [
     {
       "path": ".github/workflows/update-vault.yml",
@@ -187,11 +187,11 @@
     },
     {
       "path": "tool/package-lock.json",
-      "sha256": "978eff3d548b27e9520f476107ffa1bc95732fc005954f922bab547d726a5204"
+      "sha256": "3343bc85f8eb57ac7988bc845c52300ac43c006df90e3210e0a9dd730cac70ba"
     },
     {
       "path": "tool/package.json",
-      "sha256": "b9dc402f3d9b85444b23fcdc0de42c9b498e5ae350bafab68b7a5b794e62b2ce"
+      "sha256": "942e27574ae97cc2a4c594b5f61efc80e612d6ba83d7356e6812614d4bdf4206"
     },
     {
       "path": "tool/src/checks/broken-links.js",
@@ -419,7 +419,7 @@
     },
     {
       "path": "tool/src/lib/migrate-vault.js",
-      "sha256": "bb2ed7832a23d44e5a8383005fe1efd83dbf2c2b5a025dadb7ea118e069ecd49"
+      "sha256": "ddb63cc20f32669819ea6104648baad036b16bdcb967ce0d953cd84c27f4ce9a"
     },
     {
       "path": "tool/src/lib/migrate/adapter-kit.js",
@@ -435,7 +435,7 @@
     },
     {
       "path": "tool/src/lib/migrate/adapters/generic.js",
-      "sha256": "f1415cf523d5bafb03878e0a66934db38cb19f61943462b6c7e7366c358eaac1"
+      "sha256": "606cd76e7e871274f9e08e88290d5c5acb0162d1580383f3e171634d3ae655b8"
     },
     {
       "path": "tool/src/lib/migrate/adapters/open-second-brain.js",
@@ -443,7 +443,7 @@
     },
     {
       "path": "tool/src/lib/migrate/adapters/sb.js",
-      "sha256": "06c2845994e8ac62ce972deff51c15f86aeafc371ef0218420889d159f5229f8"
+      "sha256": "0859dc6179343de68f1bdc39eff42288da8cdf2a4cdcc7ad12a3f8c4a11a6a2a"
     },
     {
       "path": "tool/src/lib/migrate/adapters/template-framework.js",
@@ -478,6 +478,10 @@
       "sha256": "6db5ae8d99c6b7a9ddf8194e6f17c88e296f8982938d7ef174270636622b9d53"
     },
     {
+      "path": "tool/src/lib/migrate/git-index.js",
+      "sha256": "8f35f2a4cf3959d5b72ea57341ec07f1f40cc21ba1cf4698f2a17140553acdf4"
+    },
+    {
       "path": "tool/src/lib/migrate/log-chain.js",
       "sha256": "96994452acc1e16d790bd35b728c2141e16b1a6b7b431bd40ad0790b66b2edfd"
     },
@@ -491,7 +495,7 @@
     },
     {
       "path": "tool/src/lib/migrate/plan.js",
-      "sha256": "c8cf25411980314bac4d7baae15e5fb54cf125e013ba0ed85cd2e3cbc8a0a2d5"
+      "sha256": "7a914b5864696d625de7b806a21ec7520b5c17f5aa9796b086cf7f5b482c01a6"
     },
     {
       "path": "tool/src/lib/migrate/rewrite-links.js",
@@ -500,6 +504,10 @@
     {
       "path": "tool/src/lib/migrate/sidecar-map.js",
       "sha256": "b73142f9b578cb6258768366bd136c2d7f0a2892e3478008e5ef0f72645d2ae1"
+    },
+    {
+      "path": "tool/src/lib/migrate/tracked-coverage.js",
+      "sha256": "00948d55948ae6578a84fd44f5761cb0e00b2fdcc638d7e513f6c2b29efff7b4"
     },
     {
       "path": "tool/src/lib/migrate/verify.js",

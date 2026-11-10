@@ -17,6 +17,7 @@ import { requireDirectory } from './instance.js';
 import { assertSafePathArgument, isInside } from './migrate/path-args.js';
 import { chooseAdapter, loadAdapters } from './migrate/detect.js';
 import { importReport, runImport } from './migrate/engine.js';
+import { trackedCoverage } from './migrate/tracked-coverage.js';
 import { resolveUserPath } from './paths.js';
 import { buildReport, checkResult, finding } from './report.js';
 import { moveEntry } from './safe-write.js';
@@ -191,6 +192,10 @@ async function migrateForeign({ repo, apply, version, today }) {
   const scratch = join(dirname(repo), `.sbk-migrate-${tag}`);
   try {
     const result = await runImport({ source: repo, target: scratch, from: adapter.id, apply, verify: false, version, today });
+    // A tracked file that no manifest entry covers would be lost in the swap, so the swap is refused for it.
+    const tracked = await trackedCoverage(repo, result.plan.entries.map((/** @type {{ source: string }} */ e) => e.source));
+    result.checks = [...result.checks, tracked.check];
+    if (!tracked.covered) result.applied = false;
     let applied = false;
     if (result.applied) {
       await swapIntoTree(repo, scratch, join(dirname(repo), `.sbk-migrate-old-${tag}`));
@@ -216,10 +221,11 @@ async function migrateForeign({ repo, apply, version, today }) {
       mode: apply ? 'apply' : 'dry-run',
       applied,
       status,
-      reason: verified ? null : 'verification-failed',
+      reason: verified ? null : (tracked.reason ?? 'verification-failed'),
       repo,
       checks,
       detail: {
+        tracked: tracked.summary,
         adapter: imp.adapter,
         detection: imp.detection,
         counts: imp.counts,

@@ -55,7 +55,7 @@ export async function plan(root, { files }) {
       entries.push(mapped(file, `${ZONES.sources}/${baseName(file)}`, { kind: 'raw-source' }));
     } else if (isSidecarPath(file) && raws.has(rawSourcePathFor(file))) {
       // The engine settles a sidecar's destination beside its raw source; this one only has to be valid.
-      entries.push(mapped(file, `${ZONES.sources}/${baseName(file)}`, { kind: 'sidecar', sidecar_for: rawSourcePathFor(file) }));
+      entries.push(mapped(file, `${ZONES.sources}/${baseName(file)}`, { kind: 'sidecar', sidecar_for: rawSourcePathFor(file), transforms: ['sidecar-map'] }));
     } else {
       const type = file.toLowerCase().endsWith('.md') ? await operationalType(join(root, ...file.split('/'))) : null;
       entries.push(type === null ? preserved(id, file) : mappedNote(file, `${OPERATIONAL_TYPES.get(type)}/${baseName(file)}`, type));

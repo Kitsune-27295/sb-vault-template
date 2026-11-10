@@ -3,7 +3,7 @@
  *
  * Mapping (ADR 0011):
  *
- *   sources/<id>.md + <id>.meta.json     10-sources/<id>.md + <id>.md.meta.json (bytes unchanged)
+ *   sources/<id>.md + <id>.meta.json     10-sources/<id>.md (bytes unchanged) + <id>.md.meta.json (rewritten: sidecar-map)
  *   sources/inbox/ pairs                 10-sources/ too: `sb capture` already names the raw source,
  *                                        and wiki pages cite those ids
  *   wiki/*.md  source, concept, entity,
@@ -177,7 +177,7 @@ async function classify(root, file, raws, sidecars) {
     const raw = sidecars.get(file);
     if (raw !== undefined) {
       // The engine settles a sidecar's destination beside its raw source; this one only has to be valid.
-      return mapped(file, `${ZONES.sources}/${name}`, { kind: 'sidecar', sidecar_for: raw });
+      return mapped(file, `${ZONES.sources}/${name}`, { kind: 'sidecar', sidecar_for: raw, transforms: ['sidecar-map'] });
     }
     return preserved(id, file, isSidecarPath(file) || isMarkdown(file) ? 'no-valid-sidecar' : 'no-zone');
   }
