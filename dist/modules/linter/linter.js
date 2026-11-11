@@ -1,6 +1,7 @@
 import { VaultDatabase } from "../../core/db/database.js";
 import { parseNoteContent } from "../../core/parser/frontmatter.js";
 import { walkDirectory } from "../migrator/migrator.js";
+import { isInstanceLayout } from "../../core/vault-layout.js";
 import { readFileSync, existsSync } from "node:fs";
 import { relative, extname, basename } from "node:path";
 // Specialized Check Runners
@@ -28,13 +29,36 @@ export function isContentNoteFile(relPath) {
     }
     return true;
 }
+// Zones whose files are immutable captures or hash-chained logs: a content-quality finding
+// there can never be fixed by editing, so reporting it only buries the real findings.
+const IMMUTABLE_ZONES = ["10-sources/", "50-ops/log/", "50-ops/quarantine/", "20-human/_imported/"];
+const CONTENT_QUALITY_RULES = new Set(["broken-link", "orphan-node", "mermaid-syntax", "schema-violation"]);
+// `unlinked-mention` re-reads every note for every title (quadratic): minutes on a vault
+// of thousands of notes. It is an info-level heuristic, so it runs only when asked for.
+const EXPLICIT_ONLY_CHECKS = new Set(["unlinked-mention"]);
+// Integrity checks (secret-scan, raw-source-integrity, log-append-only, capture-ledger, ...)
+// are never exempt. The Instance note schema lives in 90-system/schema and is not validated
+// by this engine, so a Zettelkasten schema mismatch (a warning) is dropped on an Instance
+// vault. Invalid YAML syntax and notes that cannot be read at all are real defects in a
+// writable zone and stay reported.
+export function isExemptOnInstanceLayout(finding) {
+    if (!CONTENT_QUALITY_RULES.has(finding.rule))
+        return false;
+    const file = finding.file.replace(/\\/g, "/");
+    if (IMMUTABLE_ZONES.some((zone) => file.startsWith(zone)))
+        return true;
+    if (finding.rule === "schema-violation") {
+        return finding.severity === "warning" && !finding.message.startsWith("Invalid YAML syntax");
+    }
+    return false;
+}
 export function lintVault(vaultPath, db, options = {}) {
     const localDb = db || new VaultDatabase(":memory:");
     const files = walkDirectory(vaultPath)
         .filter((f) => extname(f).toLowerCase() === ".md")
         .filter((f) => isContentNoteFile(relative(vaultPath, f)));
     const activeChecks = options.checks ? new Set(options.checks) : null;
-    const shouldRun = (checkId) => !activeChecks || activeChecks.has(checkId);
+    const shouldRun = (checkId) => activeChecks ? activeChecks.has(checkId) : !EXPLICIT_ONLY_CHECKS.has(checkId);
     const findings = [];
     // 1. Index & Schema Violations
     for (const file of files) {
@@ -157,16 +181,19 @@ export function lintVault(vaultPath, db, options = {}) {
     if (shouldRun("mermaid-syntax")) {
         findings.push(...runMermaidSyntaxCheck(vaultPath));
     }
-    const errorCount = findings.filter((f) => f.severity === "error").length;
-    const warningCount = findings.filter((f) => f.severity === "warning").length;
-    const infoCount = findings.filter((f) => f.severity === "info").length;
+    const reported = isInstanceLayout(vaultPath)
+        ? findings.filter((f) => !isExemptOnInstanceLayout(f))
+        : findings;
+    const errorCount = reported.filter((f) => f.severity === "error").length;
+    const warningCount = reported.filter((f) => f.severity === "warning").length;
+    const infoCount = reported.filter((f) => f.severity === "info").length;
     return {
         vaultPath,
         totalNotes: localDb.getAllNodes().length,
         errorCount,
         warningCount,
         infoCount,
-        findings,
+        findings: reported,
         isClean: errorCount === 0
     };
 }

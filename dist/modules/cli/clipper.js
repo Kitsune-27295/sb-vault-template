@@ -2,6 +2,7 @@ import { writeFileSync, mkdirSync, existsSync, readFileSync, readdirSync } from 
 import { resolve, join, basename } from "node:path";
 import { computeSha256 } from "../../core/parser/frontmatter.js";
 import { scanTextForSecrets } from "../linter/checks/secret-scan.js";
+import { resolveDropDir } from "../../core/vault-layout.js";
 const SENSITIVE_QUERY_PATTERNS = [
     /[?&](?:token|key|secret|session|password|sig|api_key|auth)=/i
 ];
@@ -151,12 +152,8 @@ export async function clipSource(options) {
         };
     }
     const sha256 = computeSha256(text);
-    // Target directory: 01_Inbox/_drop/ or legacy sources/inbox/
-    const dropDir = existsSync(join(vaultPath, "01_Inbox", "_drop"))
-        ? join(vaultPath, "01_Inbox", "_drop")
-        : existsSync(join(vaultPath, "01_Inbox"))
-            ? join(vaultPath, "01_Inbox", "_drop")
-            : join(vaultPath, "sources", "inbox");
+    // Target directory: 01_Inbox/_drop/, 50-ops/inbox/_drop/ (Instance vault) or legacy sources/inbox/
+    const dropDir = resolveDropDir(vaultPath);
     mkdirSync(dropDir, { recursive: true });
     // Deduplication check
     const existingId = findExistingClippedSource(dropDir, urlOrFile, sha256);

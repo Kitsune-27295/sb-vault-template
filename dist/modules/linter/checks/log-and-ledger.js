@@ -50,7 +50,10 @@ export function runCaptureLedgerCheck(vaultPath) {
             const lines = content.split(/\r?\n/);
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
-                const captureMatch = line.match(/^##\s+.*\s+(?:capture|supersede)\s+([A-Za-z0-9_-]+)/i);
+                // The operation must follow the entry's date or timestamp directly, as in
+                // `## [2026-11-10] capture | <id>` or `## 2026-11-10T12:00:00 supersede <id>`.
+                // The word "capture" elsewhere in a title (`ingest-skip | x — capture truncated`) is not an entry.
+                const captureMatch = line.match(/^##\s+(?:\[[^\]]*\]|\d{4}-\d{2}-\d{2}(?:[T\s]+\d{2}:\d{2}:\d{2})?)\s+(?:capture|supersede)\b\s*\|?\s*([A-Za-z0-9_.-]+)/i);
                 if (captureMatch) {
                     const sourceId = captureMatch[1];
                     // Look for this source id in vault files

@@ -3,10 +3,9 @@
 Operational memory for active and upcoming sessions. Keep concise (budget: 60 lines max).
 
 <!-- sb:counts:start -->
-- Total Knowledge Notes: 19
 - Active Projects: 0
-- Pending Inbox Drops: 0
-- Last Sync/Ingest: 2026-11-11
+- Pending Proposals: 0
+- Last Sealed Source: none
 <!-- sb:counts:end -->
 
 ## Session Focus & Current Objectives

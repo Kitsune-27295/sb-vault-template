@@ -22,5 +22,6 @@ export interface LintOptions {
     frameworkVersion?: string;
 }
 export declare function isContentNoteFile(relPath: string): boolean;
+export declare function isExemptOnInstanceLayout(finding: LintFinding): boolean;
 export declare function lintVault(vaultPath: string, db?: VaultDatabase, options?: LintOptions): LintReport;
 //# sourceMappingURL=linter.d.ts.map

@@ -1,6 +1,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-export function runFrameworkVersionCheck(vaultPath, currentFrameworkVersion = "1.5.0") {
+import { ENGINE_VERSION } from "../../../core/version.js";
+export function runFrameworkVersionCheck(vaultPath, currentFrameworkVersion = ENGINE_VERSION) {
     const findings = [];
     const candidateLocks = [
         "00_System/Config/framework.lock",

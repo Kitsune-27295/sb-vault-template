@@ -13,9 +13,11 @@ import { ingestPendingSources, updateHotMemoryAndIndex } from "../../core/memory
 import { GitHubWatchtower } from "../watchtower/github-watcher.js";
 import { parseWatchlistContent, updateWatchlistNote } from "../watchtower/watchlist-parser.js";
 import { upgradeVault } from "../upgrader/upgrader.js";
+import { resolveCaptureDir } from "../../core/vault-layout.js";
+import { ENGINE_VERSION } from "../../core/version.js";
 function printUsage() {
     console.log(`
-Second Brain Engine CLI (sb / sbk) — v1.4.0
+Second Brain Engine CLI (sb / sbk) — v${ENGINE_VERSION}
 
 Usage:
   sb init <targetPath> [--name <title>]               Bootstrap a clean Second Brain vault
@@ -37,7 +39,7 @@ Usage:
   sb scan-secrets [vaultPath] [--json]                Scan files for exposed tokens & keys
   sb templates [vaultPath]                            List or render canonical note templates
   sb migrate <sourceDir> <targetDir> [--dry-run]      Non-destructive DOCX & MD migration
-  sb upgrade [vaultPath] [--apply] [--json]           Upgrade vault to latest turnkey framework v1.5.0
+  sb upgrade [vaultPath] [--apply] [--json]           Upgrade vault to latest turnkey framework v${ENGINE_VERSION}
 `);
 }
 export function copyDirectoryRecursive(src, dest) {
@@ -498,9 +500,7 @@ export async function runCli(rawArgs) {
             const sha256 = computeSha256(fileContent.toString("utf8"));
             const fileName = basename(srcFilePath);
             const sourceId = `SRC-${Date.now()}-${fileName.replace(/[^a-zA-Z0-9]/g, "-").toUpperCase()}`;
-            const destDir = existsSync(join(vaultPath, "02_Zettelkasten", "01_Literature_Notes"))
-                ? join(vaultPath, "02_Zettelkasten", "01_Literature_Notes")
-                : join(vaultPath, "80-sources");
+            const destDir = resolveCaptureDir(vaultPath);
             mkdirSync(destDir, { recursive: true });
             const destPath = join(destDir, fileName);
             copyFileSync(srcFilePath, destPath);

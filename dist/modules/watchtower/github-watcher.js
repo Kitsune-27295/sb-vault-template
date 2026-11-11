@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { parseWatchlistContent, updateWatchlistNote } from "./watchlist-parser.js";
 import { clipSource } from "../cli/clipper.js";
 import { ingestPendingSources } from "../../core/memory/context-memory.js";
+import { ENGINE_VERSION } from "../../core/version.js";
 export function sanitizeVendorDocumentation(rawMarkdown) {
     // Strip Microsoft Learn / proprietary vendor frontmatter clutter while preserving title and core content
     let text = rawMarkdown;
@@ -47,7 +48,7 @@ export class GitHubWatchtower {
     }
     getHeaders() {
         const headers = {
-            "User-Agent": "SecondBrain-Watchtower/1.4.0",
+            "User-Agent": `SecondBrain-Watchtower/${ENGINE_VERSION}`,
             Accept: "application/vnd.github.v3+json"
         };
         if (this.githubToken) {

@@ -1,6 +1,13 @@
 import DatabaseConstructor from "better-sqlite3";
 import { dirname } from "node:path";
 import { mkdirSync } from "node:fs";
+// Bump when the table layout changes: an index written by another version is dropped and rebuilt.
+const SCHEMA_VERSION = 2;
+// A wikilink may name a note by its vault-relative path (`[[50-ops/hot]]`), which is how
+// Obsidian resolves folder-qualified links; the path without `.md` is a valid target too.
+// Obsidian also matches link targets without regard to letter case, so the comparisons lower-case.
+const pathWithoutExtension = (column) => `CASE WHEN lower(${column}) LIKE '%.md' THEN substr(${column}, 1, length(${column}) - 3) ELSE ${column} END`;
+const NOTE_PATH_NO_EXT = pathWithoutExtension("file_path");
 export class VaultDatabase {
     db;
     constructor(dbPath = ":memory:") {
@@ -17,6 +24,17 @@ export class VaultDatabase {
         this.db.pragma("foreign_keys = ON");
     }
     initSchema() {
+        // The index is a rebuildable cache. Version 2 keys each full-text row by the node's rowid, so
+        // a note can be re-indexed without scanning the whole FTS table; an older cache is discarded.
+        if (this.db.pragma("user_version", { simple: true }) !== SCHEMA_VERSION) {
+            this.db.exec(`
+        DROP TABLE IF EXISTS context_chunks;
+        DROP TABLE IF EXISTS node_edges;
+        DROP TABLE IF EXISTS nodes_fts;
+        DROP TABLE IF EXISTS note_paths;
+        DROP TABLE IF EXISTS nodes;
+      `);
+        }
         this.db.exec(`
       CREATE TABLE IF NOT EXISTS nodes (
         uid TEXT PRIMARY KEY,
@@ -64,7 +82,14 @@ export class VaultDatabase {
         updated_at TEXT NOT NULL,
         FOREIGN KEY(node_uid) REFERENCES nodes(uid) ON DELETE CASCADE
       );
+
+      -- Every note's vault-relative path (lower-cased, without .md). Notes are keyed by file
+      -- name, so two files with the same name share one node row; their paths stay distinct here.
+      CREATE TABLE IF NOT EXISTS note_paths (
+        path_key TEXT PRIMARY KEY
+      );
     `);
+        this.db.pragma(`user_version = ${SCHEMA_VERSION}`);
     }
     upsertNode(parsed, filePath) {
         const fm = parsed.frontmatter;
@@ -81,6 +106,9 @@ export class VaultDatabase {
             return null;
         };
         const runTransaction = this.db.transaction(() => {
+            this.db
+                .prepare("INSERT OR IGNORE INTO note_paths (path_key) VALUES (?)")
+                .run(filePath.replace(/\\/g, "/").replace(/\.md$/i, "").toLowerCase());
             // 1. Upsert into nodes
             const stmtNode = this.db.prepare(`
         INSERT INTO nodes (
@@ -113,13 +141,14 @@ export class VaultDatabase {
                 raw_yaml: parsed.rawYaml,
                 updated_at: now
             });
-            // 2. Refresh FTS5
-            this.db.prepare("DELETE FROM nodes_fts WHERE uid = ?").run(fm.uid);
+            // 2. Refresh FTS5, keyed by the node's rowid (deleting `WHERE uid = ?` scans the whole table)
+            const nodeRow = this.db.prepare("SELECT rowid AS id FROM nodes WHERE uid = ?").get(fm.uid);
+            this.db.prepare("DELETE FROM nodes_fts WHERE rowid = ?").run(nodeRow.id);
             const stmtFts = this.db.prepare(`
-        INSERT INTO nodes_fts (uid, title, aliases, tags, summary, markdown_body)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO nodes_fts (rowid, uid, title, aliases, tags, summary, markdown_body)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
-            stmtFts.run(fm.uid, fm.title, (fm.aliases || []).join(" "), (fm.tags || []).join(" "), fm.summary || "", parsed.markdownBody);
+            stmtFts.run(nodeRow.id, fm.uid, fm.title, (fm.aliases || []).join(" "), (fm.tags || []).join(" "), fm.summary || "", parsed.markdownBody);
             // 3. Clear existing outgoing edges for this node
             this.db.prepare("DELETE FROM node_edges WHERE source_uid = ?").run(fm.uid);
             // 4. Insert explicit relations from frontmatter
@@ -146,7 +175,9 @@ export class VaultDatabase {
         const stmt = this.db.prepare(`
       UPDATE node_edges
       SET is_broken_link = CASE
-        WHEN target_uid NOT IN (SELECT uid FROM nodes) THEN 1
+        WHEN lower(target_uid) NOT IN (SELECT lower(uid) FROM nodes)
+         AND lower(target_uid) NOT IN (SELECT lower(${NOTE_PATH_NO_EXT}) FROM nodes)
+         AND lower(target_uid) NOT IN (SELECT path_key FROM note_paths) THEN 1
         ELSE 0
       END
     `);
@@ -258,12 +289,18 @@ export class VaultDatabase {
     `).all();
     }
     getOrphanNodes() {
-        return this.db.prepare(`
-      SELECT * FROM nodes n
-      WHERE NOT EXISTS (SELECT 1 FROM node_edges WHERE source_uid = n.uid)
-        AND NOT EXISTS (SELECT 1 FROM node_edges WHERE target_uid = n.uid)
-      ORDER BY n.uid ASC
-    `).all();
+        // Build the link sets once (O(nodes + edges)). A per-note `lower(target_uid) = ...` subquery
+        // cannot use the index on target_uid and would rescan every edge for every note.
+        const sources = new Set(this.db.prepare("SELECT DISTINCT source_uid AS k FROM node_edges").all().map((r) => r.k));
+        const targets = new Set(this.db.prepare("SELECT DISTINCT lower(target_uid) AS k FROM node_edges").all().map((r) => r.k));
+        const nodes = this.db.prepare("SELECT * FROM nodes ORDER BY uid ASC").all();
+        return nodes.filter((n) => {
+            if (sources.has(n.uid))
+                return false;
+            if (targets.has(n.uid.toLowerCase()))
+                return false;
+            return !targets.has(n.file_path.replace(/\.md$/i, "").toLowerCase());
+        });
     }
     close() {
         this.db.close();

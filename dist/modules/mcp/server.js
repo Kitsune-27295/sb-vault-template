@@ -11,13 +11,14 @@ import { walkDirectory } from "../migrator/migrator.js";
 import { clipSource } from "../cli/clipper.js";
 import { ingestPendingSources } from "../../core/memory/context-memory.js";
 import { GitHubWatchtower } from "../watchtower/github-watcher.js";
+import { ENGINE_VERSION } from "../../core/version.js";
 export function createSecondBrainMcpServer(vaultPath) {
     const dbPath = join(vaultPath, ".vault", "index.db");
     const db = new VaultDatabase(dbPath);
     const assembler = new ContextAssembler(db);
     const server = new Server({
         name: "second-brain-engine",
-        version: "1.4.0"
+        version: ENGINE_VERSION
     }, {
         capabilities: {
             tools: {}
