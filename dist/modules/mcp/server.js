@@ -12,6 +12,7 @@ import { clipSource } from "../cli/clipper.js";
 import { ingestPendingSources } from "../../core/memory/context-memory.js";
 import { GitHubWatchtower } from "../watchtower/github-watcher.js";
 import { ENGINE_VERSION } from "../../core/version.js";
+import { instantiateTemplate } from "../../core/template-vars.js";
 export function createSecondBrainMcpServer(vaultPath) {
     const dbPath = join(vaultPath, ".vault", "index.db");
     const db = new VaultDatabase(dbPath);
@@ -387,11 +388,7 @@ export function createSecondBrainMcpServer(vaultPath) {
                     }
                     const tplContent = readFileSync(tplPath, "utf8");
                     const dateStr = new Date().toISOString().slice(0, 10);
-                    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-                    const instantiated = tplContent
-                        .replace(/\{\{TITLE\}\}/g, title)
-                        .replace(/\{\{DATE\}\}/g, dateStr)
-                        .replace(/\{\{SLUG\}\}/g, slug);
+                    const instantiated = instantiateTemplate(tplContent, title, dateStr);
                     const fullTarget = join(vaultPath, relPath);
                     mkdirSync(dirname(fullTarget), { recursive: true });
                     writeFileSync(fullTarget, instantiated, "utf8");

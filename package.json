@@ -1,6 +1,6 @@
 {
   "name": "sb-vault-template",
-  "version": "1.5.2",
+  "version": "1.6.0",
   "license": "MIT",
   "description": "Production-ready Second Brain Vault & Pre-Compiled Engine: local-first PKM with SQLite WAL/FTS5, 3-tier RAG, and native MCP server.",
   "type": "module",
