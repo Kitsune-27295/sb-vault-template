@@ -3,6 +3,7 @@ export interface BuildDistOptions {
     outDir: string;
     repoRoot?: string;
 }
+export declare function renderConsumerReadme(version: string): string;
 export declare function buildDistTemplate(options: BuildDistOptions): {
     outDir: string;
     fileCount: number;

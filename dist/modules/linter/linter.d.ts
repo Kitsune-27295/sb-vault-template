@@ -23,5 +23,6 @@ export interface LintOptions {
 }
 export declare function isContentNoteFile(relPath: string): boolean;
 export declare function isExemptOnInstanceLayout(finding: LintFinding): boolean;
+export declare function isSealedOrImmutable(vaultPath: string, finding: LintFinding, cache?: Map<string, boolean>): boolean;
 export declare function lintVault(vaultPath: string, db?: VaultDatabase, options?: LintOptions): LintReport;
 //# sourceMappingURL=linter.d.ts.map

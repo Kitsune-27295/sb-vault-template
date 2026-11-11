@@ -1,7 +1,39 @@
-import { resolve, join, relative } from "node:path";
+import { resolve, join, relative, dirname } from "node:path";
 import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, statSync, copyFileSync } from "node:fs";
 import { computeSha256 } from "../../core/parser/frontmatter.js";
-import { copyRecursive } from "../distributer/builder.js";
+import { copyRecursive, renderConsumerReadme } from "../distributer/builder.js";
+// Files of `vault-template/` that belong to the framework (the seed example notes do not).
+const TEMPLATE_OWNED = [
+    "00_System/Templates/",
+    "00_System/Integrations/",
+    "00_System/Automation/",
+    "00_System/Watchlist_Repos.md",
+    ".obsidian/",
+    "04_Synthesis_Outputs/Hot_Memory.md"
+];
+const TEMPLATE_FOLDERS = [
+    "01_Inbox/_drop",
+    "01_Inbox/_quarantine",
+    "02_Zettelkasten/01_Literature_Notes",
+    "02_Zettelkasten/02_Permanent_Notes",
+    "02_Zettelkasten/03_Concept_Notes",
+    "02_Zettelkasten/04_MOCs",
+    "03_PARA/01_Projects",
+    "03_PARA/02_Areas",
+    "03_PARA/03_Resources",
+    "03_PARA/04_Archives",
+    "04_Synthesis_Outputs"
+];
+function listFiles(dir, acc = []) {
+    for (const entry of readdirSync(dir)) {
+        const full = join(dir, entry);
+        if (statSync(full).isDirectory())
+            listFiles(full, acc);
+        else
+            acc.push(full);
+    }
+    return acc;
+}
 export async function upgradeVault(targetVaultPath, options = {}) {
     const vaultPath = resolve(targetVaultPath);
     const root = resolve(options.repoRoot || process.cwd());
@@ -267,8 +299,15 @@ export async function upgradeVault(targetVaultPath, options = {}) {
         const agentsPath = join(vaultPath, "AGENTS.md");
         if (existsSync(agentsPath)) {
             const existingAgents = readFileSync(agentsPath, "utf8");
-            // If it's an instance AGENTS.md (starts with Second Brain Instance), append the new MCP & governance sections
-            if (!existingAgents.includes("sb_assemble_context")) {
+            // The published template ships the framework's root AGENTS.md (see buildDistTemplate).
+            const templateAgents = join(root, "AGENTS.md");
+            if (systemDir === "00_System" && /^#\s+Second Brain Instance\b/.test(existingAgents) && existsSync(templateAgents)) {
+                // A vault on the template layout adopts the template contract; the numeric-zone one describes
+                // folders it no longer has.
+                copyFileSync(templateAgents, agentsPath);
+            }
+            else if (!existingAgents.includes("sb_assemble_context")) {
+                // An instance AGENTS.md on numeric zones: append the new MCP & governance sections
                 const canonicalSnippet = `
 ## Native Model Context Protocol (MCP) Tools
 
@@ -285,6 +324,42 @@ When interacting with this vault, agents execute operations via the 10 canonical
 10. \`sb_create_from_template\`: Scaffolds notes instantiated from canonical templates.
 `;
                 writeFileSync(agentsPath, existingAgents.trimEnd() + "\n" + canonicalSnippet, "utf8");
+            }
+        }
+    }
+    // 8b. Template-owned files of a vault on the template layout: added when missing, never overwritten
+    // (the vault's own templates, memory and settings win); empty template folders are created.
+    if (systemDir === "00_System") {
+        // The README of the numeric-zone framework describes folders the vault no longer has; a README the
+        // curator wrote is theirs and stays.
+        const readmePath = join(vaultPath, "README.md");
+        if (!existsSync(readmePath) || readFileSync(readmePath, "utf8").startsWith("# Your Second Brain Instance")) {
+            changes.push({ action: existsSync(readmePath) ? "update" : "add", path: "README.md", description: "Template README" });
+            if (isApply)
+                writeFileSync(readmePath, renderConsumerReadme(targetVersion), "utf8");
+        }
+        const templateRoot = join(root, "vault-template");
+        if (existsSync(templateRoot)) {
+            for (const file of listFiles(templateRoot)) {
+                const rel = relative(templateRoot, file).replace(/\\/g, "/");
+                if (!TEMPLATE_OWNED.some((p) => rel === p || rel.startsWith(p)) || rel.endsWith(".gitkeep"))
+                    continue;
+                if (existsSync(join(vaultPath, rel)))
+                    continue;
+                changes.push({ action: "add", path: rel, description: "Template-owned file" });
+                if (isApply) {
+                    mkdirSync(dirname(join(vaultPath, rel)), { recursive: true });
+                    copyFileSync(file, join(vaultPath, rel));
+                }
+            }
+        }
+        for (const folder of TEMPLATE_FOLDERS) {
+            if (existsSync(join(vaultPath, folder)))
+                continue;
+            changes.push({ action: "add", path: `${folder}/.gitkeep`, description: "Template folder" });
+            if (isApply) {
+                mkdirSync(join(vaultPath, folder), { recursive: true });
+                writeFileSync(join(vaultPath, folder, ".gitkeep"), "", "utf8");
             }
         }
     }

@@ -1,5 +1,5 @@
 import { VaultDatabase } from "../../core/db/database.js";
-import { parseNoteContent } from "../../core/parser/frontmatter.js";
+import { parseNoteContent, computeSha256 } from "../../core/parser/frontmatter.js";
 import { walkDirectory } from "../migrator/migrator.js";
 import { isInstanceLayout } from "../../core/vault-layout.js";
 import { readFileSync, existsSync } from "node:fs";
@@ -21,7 +21,10 @@ export function isContentNoteFile(relPath) {
         normalized.startsWith(".obsidian/") ||
         normalized.includes("/Templates/") ||
         normalized.includes("/templates/") ||
-        normalized.startsWith("00_System/Templates/") ||
+        // The framework's own files (templates, integrations, watchlist, config) and the generated
+        // hot memory are not notes of the vault.
+        normalized.startsWith("00_System/") ||
+        normalized === "04_Synthesis_Outputs/Hot_Memory.md" ||
         normalized === "AGENTS.md" ||
         normalized === "CLAUDE.md" ||
         normalized === "README.md") {
@@ -51,6 +54,35 @@ export function isExemptOnInstanceLayout(finding) {
         return finding.severity === "warning" && !finding.message.startsWith("Invalid YAML syntax");
     }
     return false;
+}
+// Template-layout zones that hold hash-chained logs and quarantined third-party captures.
+const TEMPLATE_IMMUTABLE_ZONES = ["04_Synthesis_Outputs/Log/", "01_Inbox/_quarantine/"];
+// A note that has a `<file>.meta.json` sidecar whose hash matches the file is a sealed raw source (on
+// every layout): its bytes are pinned, so a content-quality finding in it can never be fixed by
+// editing. A sidecar that does not match seals nothing (raw-source-integrity reports the mismatch and
+// the note's own problems stay visible). Integrity checks are never exempt.
+export function isSealedOrImmutable(vaultPath, finding, cache = new Map()) {
+    if (!CONTENT_QUALITY_RULES.has(finding.rule))
+        return false;
+    const file = finding.file.replace(/\\/g, "/");
+    if (TEMPLATE_IMMUTABLE_ZONES.some((zone) => file.startsWith(zone)))
+        return true;
+    const cached = cache.get(file);
+    if (cached !== undefined)
+        return cached;
+    let sealed = false;
+    const sidecarPath = `${vaultPath}/${file}.meta.json`;
+    if (existsSync(sidecarPath)) {
+        try {
+            const meta = JSON.parse(readFileSync(sidecarPath, "utf8"));
+            sealed = typeof meta.sha256 === "string" && meta.sha256 === computeSha256(readFileSync(`${vaultPath}/${file}`).toString("utf8"));
+        }
+        catch {
+            sealed = false;
+        }
+    }
+    cache.set(file, sealed);
+    return sealed;
 }
 export function lintVault(vaultPath, db, options = {}) {
     const localDb = db || new VaultDatabase(":memory:");
@@ -181,9 +213,9 @@ export function lintVault(vaultPath, db, options = {}) {
     if (shouldRun("mermaid-syntax")) {
         findings.push(...runMermaidSyntaxCheck(vaultPath));
     }
-    const reported = isInstanceLayout(vaultPath)
-        ? findings.filter((f) => !isExemptOnInstanceLayout(f))
-        : findings;
+    const instance = isInstanceLayout(vaultPath);
+    const sealedCache = new Map();
+    const reported = findings.filter((f) => !(instance && isExemptOnInstanceLayout(f)) && !isSealedOrImmutable(vaultPath, f, sealedCache));
     const errorCount = reported.filter((f) => f.severity === "error").length;
     const warningCount = reported.filter((f) => f.severity === "warning").length;
     const infoCount = reported.filter((f) => f.severity === "info").length;

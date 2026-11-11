@@ -1,4 +1,4 @@
-# Second Brain Vault Template (v1.5.1)
+# Second Brain Vault Template (v1.5.2)
 
 Production-grade, local-first **Second Brain (PKM) Vault** powered by the **Second Brain Framework Engine**.
 

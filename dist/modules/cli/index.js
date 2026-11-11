@@ -14,6 +14,7 @@ import { GitHubWatchtower } from "../watchtower/github-watcher.js";
 import { parseWatchlistContent, updateWatchlistNote } from "../watchtower/watchlist-parser.js";
 import { upgradeVault } from "../upgrader/upgrader.js";
 import { resolveCaptureDir } from "../../core/vault-layout.js";
+import { planLayoutMigration, applyLayoutMigration, assertSafeToApply } from "../migrator/layout-migrator.js";
 import { ENGINE_VERSION } from "../../core/version.js";
 function printUsage() {
     console.log(`
@@ -40,6 +41,8 @@ Usage:
   sb templates [vaultPath]                            List or render canonical note templates
   sb migrate <sourceDir> <targetDir> [--dry-run]      Non-destructive DOCX & MD migration
   sb upgrade [vaultPath] [--apply] [--json]           Upgrade vault to latest turnkey framework v${ENGINE_VERSION}
+  sb migrate-layout <vaultPath> [--apply] [--force]   Move a numeric-zone vault to the template layout (dry run by default;
+                                                      --apply needs a clean git tree unless --force)
 `);
 }
 export function copyDirectoryRecursive(src, dest) {
@@ -80,7 +83,7 @@ export async function runCli(rawArgs) {
     }
     const isJson = cleanArgs.includes("--json");
     const positionalPath = cleanArgs[1] && !cleanArgs[1].startsWith("--") ? resolve(process.cwd(), cleanArgs[1]) : null;
-    const vaultPath = positionalPath && ["index", "watch", "lint", "doctor", "stats", "scan-secrets", "templates", "capture", "upgrade"].includes(command)
+    const vaultPath = positionalPath && ["index", "watch", "lint", "doctor", "stats", "scan-secrets", "templates", "capture", "upgrade", "migrate-layout"].includes(command)
         ? positionalPath
         : parsedVault;
     const dbPath = join(vaultPath, ".vault", "index.db");
@@ -623,6 +626,64 @@ export async function runCli(rawArgs) {
                     console.log(`\nUpgrade completed successfully! Next steps:\n  cd "${vaultPath}" && npm install && npm run setup`);
                 }
             }
+            break;
+        }
+        case "migrate-layout": {
+            const isApply = cleanArgs.includes("--apply");
+            const plan = planLayoutMigration(vaultPath);
+            if (plan.collisions.length > 0) {
+                console.error(`Layout collisions (${plan.collisions.length}); nothing was changed:`);
+                for (const c of plan.collisions.slice(0, 20))
+                    console.error(`  ${c.to} <- ${c.from.join(" | ")}`);
+                process.exit(1);
+            }
+            let report = null;
+            if (isApply) {
+                try {
+                    assertSafeToApply(vaultPath, cleanArgs.includes("--force"));
+                    report = applyLayoutMigration(vaultPath, plan);
+                }
+                catch (err) {
+                    console.error(`Layout migration refused: ${err instanceof Error ? err.message : String(err)}`);
+                    process.exit(1);
+                }
+            }
+            if (isJson) {
+                console.log(JSON.stringify({ applied: isApply, counts: plan.counts, report, items: isApply ? undefined : plan.items }, null, 2));
+            }
+            else {
+                console.log(`\nLayout migration for: ${vaultPath}`);
+                console.log(`* Mode: ${isApply ? "APPLIED" : "DRY-RUN (pass --apply to execute)"}`);
+                console.log(`* move: ${plan.counts.move} | convert: ${plan.counts.convert} | remove: ${plan.counts.remove} | keep: ${plan.counts.keep}`);
+                if (!isApply) {
+                    const removed = {};
+                    for (const i of plan.items.filter((x) => x.action === "remove")) {
+                        const group = i.from.split("/").slice(0, 2).join("/");
+                        removed[group] = (removed[group] ?? 0) + 1;
+                    }
+                    console.log(`\nTo be removed (${plan.counts.remove}), by folder:`);
+                    for (const [group, n] of Object.entries(removed).sort((a, b) => b[1] - a[1]).slice(0, 25))
+                        console.log(`  ${String(n).padStart(5)}  ${group}`);
+                }
+                const kept = plan.items.filter((i) => i.action === "keep");
+                if (kept.length > 0) {
+                    console.log(`\nKept (not known to the migration, ${kept.length}):`);
+                    for (const k of kept.slice(0, 20))
+                        console.log(`  ${k.from}`);
+                }
+                if (report) {
+                    console.log(`\nVerification: ${report.mismatches.length === 0 ? "every moved file is byte-identical and every converted body is unchanged" : `${report.mismatches.length} MISMATCH(ES)`}`);
+                    for (const m of report.mismatches.slice(0, 20))
+                        console.log(`  ${m}`);
+                    if (report.warnings.length > 0) {
+                        console.log(`\nWarnings (${report.warnings.length}):`);
+                        for (const w of report.warnings.slice(0, 20))
+                            console.log(`  ${w}`);
+                    }
+                }
+            }
+            if (report && report.mismatches.length > 0)
+                process.exit(1);
             break;
         }
         default:
