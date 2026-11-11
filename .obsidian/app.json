@@ -1,0 +1,9 @@
+{
+  "userIgnoreFilters": [
+    "00_System/",
+    ".vault/",
+    ".agents/",
+    "01_Inbox/_quarantine/"
+  ]
+}
+

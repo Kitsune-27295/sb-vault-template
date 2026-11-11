@@ -1,0 +1,29 @@
+{
+  "name": "sb-vault-template",
+  "version": "1.5.0",
+  "license": "MIT",
+  "description": "Production-ready Second Brain Vault & Pre-Compiled Engine: local-first PKM with SQLite WAL/FTS5, 3-tier RAG, and native MCP server.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "sb": "./bin/sb.js",
+    "sbk": "./bin/sb.js"
+  },
+  "scripts": {
+    "setup": "node ./bin/sb.js index . && node ./bin/sb.js doctor .",
+    "index": "node ./bin/sb.js index .",
+    "doctor": "node ./bin/sb.js doctor .",
+    "watch": "node ./bin/sb.js watch .",
+    "sync-repos": "node ./bin/sb.js sync-repos --ingest --vault .",
+    "mcp": "node ./dist/modules/mcp/server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "better-sqlite3": "^13.0.3",
+    "chokidar": "^6.0.0",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
+  }
+}

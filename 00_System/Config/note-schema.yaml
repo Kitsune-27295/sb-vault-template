@@ -1,0 +1,44 @@
+version: "1.1.0"
+spec: "YAML_SCHEMA_SPEC.md"
+envelope:
+  required:
+    - uid
+    - type
+    - title
+    - status
+    - created
+    - updated
+  optional:
+    - aliases
+    - tags
+    - epistemic_confidence
+    - summary
+    - sources
+    - relations
+types:
+  - zettel
+  - concept
+  - moc
+  - project
+  - area
+  - resource
+  - archive
+  - source
+  - decision
+  - lesson
+  - log
+  - procedure
+statuses:
+  - fleeting
+  - literature
+  - permanent
+  - evergreen
+  - archived
+relations:
+  - supports
+  - contradicts
+  - extends
+  - part_of
+  - derived_from
+  - related_to
+

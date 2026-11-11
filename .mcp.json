@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "second-brain": {
+      "command": "node",
+      "args": [
+        "./dist/modules/mcp/server.js"
+      ],
+      "env": {
+        "VAULT_PATH": ".",
+        "SB_VAULT_PATH": "."
+      }
+    }
+  }
+}
